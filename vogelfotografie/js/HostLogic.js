@@ -68,7 +68,7 @@ class VogelfotografieHost {
                 this.handleStartPhotoRoll(data.birdId, senderId, callback);
                 break;
             case 'applyBonusToPhoto':
-                this.handleApplyBonus(data.insectCardId, senderId, callback);
+                this.handleApplyBonus(data, senderId, callback);
                 break;
             case 'resolvePhoto':
                 this.handleResolvePhoto(senderId, callback);
