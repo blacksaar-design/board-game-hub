@@ -587,8 +587,6 @@ function updateScoreboard() {
 
 function updateCardCounts() {
     ensurePrivateState();
-    document.getElementById('up-cards-count').textContent = gameState.myPrivateState.cards.up;
-    document.getElementById('down-cards-count').textContent = gameState.myPrivateState.cards.down;
 
     // Update button states
     document.querySelectorAll('.card-btn.up').forEach(btn => {
