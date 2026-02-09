@@ -129,7 +129,13 @@ elements.sneakBtn.addEventListener('click', () => {
 
     socket.emit('sneak', { birdId: gameState.currentBirdId, useInsect, insectId }, (response) => {
         if (response.success) {
-            if (response.result === 'scared') {
+            if (response.diceValue) {
+                UI.animateDice(elements.dice, response.diceValue, () => {
+                    if (response.result === 'scared') {
+                        UI.showModal('🕊️', 'Vogel weg!', 'Der Vogel hat dich bemerkt und ist weggeflogen.');
+                    }
+                });
+            } else if (response.result === 'scared') {
                 UI.showModal('🕊️', 'Vogel weg!', 'Der Vogel hat dich bemerkt und ist weggeflogen.');
             }
             gameState.selectedInsects = [];
@@ -144,9 +150,7 @@ elements.photoBtn.addEventListener('click', () => {
     socket.emit('startPhotoRoll', { birdId: gameState.currentBirdId }, (response) => {
         if (response.success) {
             isPhotoPending = true;
-            UI.animateDice(elements.dice, response.diceValue, () => {
-                updateActionButtons();
-            });
+            // Animation is now handled by diceRolled broadcast
             requestHandUpdate();
         }
     });
@@ -220,9 +224,9 @@ socket.on('gameStateUpdate', (state) => {
 });
 
 socket.on('diceRolled', (data) => {
-    if (data.playerId !== gameState.playerId) {
-        UI.animateDice(elements.dice, data.diceValue);
-    }
+    // Exclude self only if we handle it in the callback (sneak/photo)
+    // Actually, for simplicity, let's just let the broadcast handle it and remove manual animation from callbacks
+    UI.animateDice(elements.dice, data.diceValue);
 });
 
 socket.on('diceUpdated', (data) => {
@@ -268,6 +272,11 @@ function updateGameState(state) {
     });
 
     UI.updateDistanceTracker(state.currentDistance);
+
+    if (!state.currentBirdId) {
+        elements.selectedBirdInfo.innerHTML = '<p>Wähle einen Vogel zum Fotografieren aus</p>';
+    }
+
     updateActionButtons();
 }
 

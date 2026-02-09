@@ -128,14 +128,11 @@ class VogelfotografieHost {
             this.gameState.currentDistance = Math.min(2, this.gameState.currentDistance + 1);
             this.gameState.currentBirdId = birdId;
             this.bridge.broadcast('diceRolled', { playerId: senderId, diceValue: result });
-            callback({ success: true, result: 'success', newDistance: this.gameState.currentDistance });
+            callback({ success: true, result: 'success', newDistance: this.gameState.currentDistance, diceValue: result });
         } else {
             // Bird flies away!
             this.gameState.birdDiscard.push(birdId);
-            this.gameState.visibleBirds = this.gameState.visibleBirds.filter(b => b.id !== birdId);
-            if (this.gameState.birdDeck.length > 0) {
-                this.gameState.visibleBirds.push(this.gameState.birdDeck.shift());
-            }
+            this._replaceBird(birdId);
 
             // Draw compensatory insect
             const player = this.players.find(p => p.playerId === senderId);
@@ -202,17 +199,11 @@ class VogelfotografieHost {
         if (success) {
             player.hand.birds.push(bird);
             player.score += bird.prestige_points;
-            this.gameState.visibleBirds = this.gameState.visibleBirds.filter(b => b.id !== bird.id);
-            if (this.gameState.birdDeck.length > 0) {
-                this.gameState.visibleBirds.push(this.gameState.birdDeck.shift());
-            }
+            this._replaceBird(bird.id);
             callback({ success: true, result: 'captured' });
         } else {
             this.gameState.birdDiscard.push(bird.id);
-            this.gameState.visibleBirds = this.gameState.visibleBirds.filter(b => b.id !== bird.id);
-            if (this.gameState.birdDeck.length > 0) {
-                this.gameState.visibleBirds.push(this.gameState.birdDeck.shift());
-            }
+            this._replaceBird(bird.id);
             callback({ success: true, result: 'scared' });
         }
 
@@ -238,10 +229,7 @@ class VogelfotografieHost {
             player.hand.insects = player.hand.insects.filter(i => !insectIds.includes(i.id));
             player.hand.birds.push(bird);
             player.score += bird.prestige_points;
-            this.gameState.visibleBirds = this.gameState.visibleBirds.filter(b => b.id !== bird.id);
-            if (this.gameState.birdDeck.length > 0) {
-                this.gameState.visibleBirds.push(this.gameState.birdDeck.shift());
-            }
+            this._replaceBird(bird.id);
 
             this.gameState.currentDistance = 0;
             this.gameState.currentBirdId = null;
@@ -271,6 +259,17 @@ class VogelfotografieHost {
             score: p.score
         }));
         this.bridge.broadcast('gameEnded', { finalScores });
+    }
+
+    _replaceBird(birdId) {
+        const index = this.gameState.visibleBirds.findIndex(b => b.id === birdId);
+        if (index !== -1) {
+            if (this.gameState.birdDeck.length > 0) {
+                this.gameState.visibleBirds[index] = this.gameState.birdDeck.shift();
+            } else {
+                this.gameState.visibleBirds.splice(index, 1);
+            }
+        }
     }
 
     updateClients() {
