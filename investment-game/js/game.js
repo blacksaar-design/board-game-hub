@@ -335,12 +335,27 @@ function showInvestmentPanel() {
 
     // If not first round, show radio buttons and restrict to changing one investment
     const isAfterFirstRound = gameState.currentRound > 1;
-    const hasInvestments = gameState.myPrivateState && gameState.myPrivateState.investments && gameState.myPrivateState.investments.length > 0;
 
-    console.log('[Investment Game] Round:', gameState.currentRound, 'After first round:', isAfterFirstRound, 'Has investments:', hasInvestments);
+    console.log('[Investment Game] Round:', gameState.currentRound, 'After first round:', isAfterFirstRound);
 
-    if (isAfterFirstRound && hasInvestments) {
+    if (isAfterFirstRound) {
         console.log('[Investment Game] Restricting to 1 investment change');
+
+        // Ensure we have the player's investments from the previous round
+        ensurePrivateState();
+
+        // If myPrivateState.investments is empty, we need to populate it from the select values
+        // This happens when the page is refreshed or state is lost
+        if (!gameState.myPrivateState.investments || gameState.myPrivateState.investments.length === 0) {
+            console.log('[Investment Game] Initializing investments from current select values');
+            gameState.myPrivateState.investments = [];
+            selects.forEach((select) => {
+                const type = select.dataset.type;
+                const asset = parseInt(select.value) || 0;
+                gameState.myPrivateState.investments.push({ type, asset });
+            });
+        }
+
         // Show radio buttons
         radios.forEach(radio => {
             radio.style.display = 'inline-block';
