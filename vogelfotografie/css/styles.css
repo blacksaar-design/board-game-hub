@@ -1030,6 +1030,28 @@ input[type="text"]:focus {
     pointer-events: none;
 }
 
+.captured-photo {
+    width: 150px !important;
+    cursor: default !important;
+    transform: none !important;
+    transition: transform var(--transition-base);
+}
+
+.captured-photo:hover {
+    transform: translateY(-5px) scale(1.05) !important;
+    z-index: 10;
+}
+
+.captured-photo .bird-card-image-container {
+    aspect-ratio: 1/1.41;
+}
+
+/* Hide interaction elements on captured photos if any */
+.captured-photo .card-interaction-overlay,
+.captured-photo .bird-distances {
+    display: none !important;
+}
+
 .captured-bird-mini {
     background: var(--bg-elevated);
     border: 1px solid var(--glass-border);

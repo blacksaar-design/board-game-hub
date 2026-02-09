@@ -331,7 +331,9 @@ function updateHandDisplay() {
 
     elements.capturedBirds.innerHTML = '';
     gameState.myHand.birds.forEach(bird => {
-        elements.capturedBirds.appendChild(UI.createCapturedBirdMini(bird));
+        const card = UI.createBirdCard(bird, false);
+        card.classList.add('captured-photo');
+        elements.capturedBirds.appendChild(card);
     });
 
     const score = gameState.myHand.birds.reduce((sum, b) => sum + b.prestige_points, 0);
