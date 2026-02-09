@@ -30,6 +30,8 @@ const screens = {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('[Investment Game] DOM loaded, initializing...');
+    console.log('[Investment Game] Socket available:', typeof socket !== 'undefined');
     setupEventListeners();
 });
 
@@ -66,6 +68,9 @@ function setupEventListeners() {
 
 // Setup functions
 function createGame() {
+    console.log('[Investment Game] Create game clicked');
+    console.log('[Investment Game] Socket:', socket);
+
     const playerName = document.getElementById('player-name').value.trim();
     if (!playerName) {
         alert('Please enter your name');
@@ -73,6 +78,7 @@ function createGame() {
     }
 
     gameState.playerName = playerName;
+    console.log('[Investment Game] Emitting create-game with playerName:', playerName);
     socket.emit('create-game', { playerName });
 }
 
