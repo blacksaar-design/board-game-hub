@@ -647,15 +647,15 @@ function assignCard(event) {
         cardType: cardType
     });
 
+    // Highlight the selected button FIRST
+    btn.classList.add('assigned');
+
     // Visual feedback - disable both buttons for this asset
     const row = btn.closest('.card-assignment-row');
     const allButtons = row.querySelectorAll('.card-btn');
     allButtons.forEach(button => {
         button.disabled = true;
     });
-
-    // Highlight the selected button
-    btn.classList.add('assigned');
 }
 
 function nextRound() {
