@@ -127,7 +127,7 @@ class VogelfotografieHost {
         if (result === 'blank') {
             this.gameState.currentDistance = Math.min(2, this.gameState.currentDistance + 1);
             this.gameState.currentBirdId = birdId;
-            this.bridge.broadcast('diceRolled', { playerId: senderId, diceValue: result });
+            this.bridge.broadcast('diceRolled', { playerId: senderId, diceValue: result, skipAnimation: useInsect });
             callback({ success: true, result: 'success', newDistance: this.gameState.currentDistance, diceValue: result });
         } else {
             // Bird flies away!

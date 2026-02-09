@@ -141,7 +141,14 @@ function showScreen(screenId) {
 }
 
 // Animate dice roll
-function animateDice(element, finalValue, callback) {
+function animateDice(element, finalValue, callback, skipAnimation = false) {
+    if (skipAnimation) {
+        if (finalValue === 'bird') element.textContent = '🐦';
+        else if (finalValue === 'blank') element.textContent = '⬜';
+        else element.textContent = finalValue;
+        if (callback) callback();
+        return;
+    }
     element.classList.add('rolling');
 
     // Determine if this is a sneak dice (icons) or photo dice (numbers)

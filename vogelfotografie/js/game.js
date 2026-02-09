@@ -132,15 +132,6 @@ elements.sneakBtn.addEventListener('click', () => {
 
     socket.emit('sneak', { birdId: gameState.currentBirdId, useInsect, insectId }, (response) => {
         if (response.success) {
-            if (response.diceValue) {
-                UI.animateDice(elements.dice, response.diceValue, () => {
-                    if (response.result === 'scared') {
-                        UI.showModal('🕊️', 'Vogel weg!', 'Der Vogel hat dich bemerkt und ist weggeflogen.');
-                    }
-                });
-            } else if (response.result === 'scared') {
-                UI.showModal('🕊️', 'Vogel weg!', 'Der Vogel hat dich bemerkt und ist weggeflogen.');
-            }
             gameState.selectedInsects = [];
             requestHandUpdate();
         }
@@ -178,7 +169,7 @@ elements.confirmBtn.addEventListener('click', () => {
             isPhotoPending = false;
             if (response.result === 'captured') {
                 UI.showModal('📸', 'Foto gemacht!', 'Du hast den Vogel erfolgreich fotografiert.');
-            } else {
+            } else if (response.result === 'scared') {
                 UI.showModal('💨', 'Vogel weg!', 'Das Foto ist leider nichts geworden und der Vogel ist weg.');
             }
             gameState.selectedInsects = [];
@@ -234,9 +225,11 @@ socket.on('gameStateUpdate', (state) => {
 });
 
 socket.on('diceRolled', (data) => {
-    // Exclude self only if we handle it in the callback (sneak/photo)
-    // Actually, for simplicity, let's just let the broadcast handle it and remove manual animation from callbacks
-    UI.animateDice(elements.dice, data.diceValue);
+    UI.animateDice(elements.dice, data.diceValue, () => {
+        if (data.diceValue === 'bird') {
+            UI.showModal('🕊️', 'Vogel weg!', 'Der Vogel wurde aufgeschreckt und ist weggeflogen.');
+        }
+    }, data.skipAnimation);
 });
 
 socket.on('diceUpdated', (data) => {
