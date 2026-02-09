@@ -86,8 +86,8 @@ class VogelfotografieHost {
     }
 
     startGame(callback) {
-        if (this.players.length < 2) {
-            return callback({ success: false, error: 'Mindestens 2 Spieler erforderlich' });
+        if (this.players.length < 1) {
+            return callback({ success: false, error: 'Mindest 1 Spieler erforderlich' });
         }
 
         // Shuffle cards
