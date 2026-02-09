@@ -76,6 +76,9 @@ class VogelfotografieHost {
             case 'attract':
                 this.handleAttract(data.birdId, data.insectIds, senderId, callback);
                 break;
+            case 'captureAll':
+                this.handleCaptureAll(data.insectIds, senderId, callback);
+                break;
             case 'getHand':
                 const player = this.players.find(p => p.playerId === senderId);
                 callback(player ? player.hand : { insects: [], birds: [] });
@@ -219,6 +222,49 @@ class VogelfotografieHost {
 
         this.nextTurn();
         this.updateClients();
+    }
+
+    handleCaptureAll(insectIds, senderId, callback) {
+        if (!this._isTurn(senderId) || !this.gameState.pendingAction) return callback({ success: false, error: 'Nicht dein Zug oder keine Aktion ausstehend' });
+
+        const player = this.players.find(p => p.playerId === senderId);
+        const action = this.gameState.pendingAction;
+
+        // Verify: 3 insects of same type
+        const usedInsects = player.hand.insects.filter(i => insectIds.includes(i.id));
+        if (usedInsects.length !== 3) return callback({ success: false, error: 'Wähle genau 3 Insekten' });
+
+        const firstType = usedInsects[0].card_type;
+        const allSameType = usedInsects.every(i => i.card_type === firstType);
+        if (!allSameType) return callback({ success: false, error: 'Die Insekten müssen vom gleichen Typ sein' });
+
+        // Find all birds that match the dice roll at current distance
+        const capturedBirds = [];
+        this.gameState.visibleBirds.forEach(bird => {
+            if (this._checkPhotoSuccess(action.diceValue, bird, this.gameState.currentDistance)) {
+                capturedBirds.push(bird);
+            }
+        });
+
+        if (capturedBirds.length === 0) {
+            return callback({ success: false, error: 'Keine Vögel mit diesem Wurf erreichbar' });
+        }
+
+        // Award birds and consume insects
+        player.hand.insects = player.hand.insects.filter(i => !insectIds.includes(i.id));
+        capturedBirds.forEach(bird => {
+            player.hand.birds.push(bird);
+            player.score += bird.prestige_points;
+            this._replaceBird(bird.id);
+        });
+
+        this.gameState.pendingAction = null;
+        this.gameState.currentDistance = 0;
+        this.gameState.currentBirdId = null;
+
+        this.nextTurn();
+        this.updateClients();
+        callback({ success: true, count: capturedBirds.length });
     }
 
     handleAttract(birdId, insectIds, senderId, callback) {

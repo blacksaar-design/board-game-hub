@@ -190,6 +190,20 @@ elements.attractBtn.addEventListener('click', () => {
     });
 });
 
+elements.captureAllBtn.addEventListener('click', () => {
+    if (gameState.selectedInsects.length !== 3) return;
+
+    socket.emit('captureAll', { insectIds: gameState.selectedInsects }, (response) => {
+        if (response.success) {
+            UI.showModal('📸✨', 'Mega-Foto!', `Du hast ${response.count} Vögel gleichzeitig fotografiert!`);
+            gameState.selectedInsects = [];
+            requestHandUpdate();
+        } else {
+            UI.showModal('❌', 'Fehler', response.error);
+        }
+    });
+});
+
 elements.modalClose.addEventListener('click', () => {
     UI.hideModal();
 });
@@ -364,6 +378,17 @@ function updateActionButtons() {
 
     elements.applyBonusBtn.style.display = isPhotoPending && isMyTurn ? 'block' : 'none';
     elements.applyBonusBtn.disabled = !isMyTurn || !isPhotoPending || numInsects !== 1;
+
+    // Check for 3 matching insects for captureAll
+    let canCaptureAll = false;
+    if (isPhotoPending && isMyTurn && numInsects === 3) {
+        const selectedInsects = gameState.myHand.insects.filter(i => gameState.selectedInsects.includes(i.id));
+        const firstType = selectedInsects[0]?.card_type;
+        canCaptureAll = selectedInsects.every(i => i.card_type === firstType);
+    }
+
+    elements.captureAllBtn.style.display = canCaptureAll ? 'block' : 'none';
+    elements.captureAllBtn.disabled = !canCaptureAll;
 
     // Attract button visibility (optional, but keep consistent)
     elements.attractBtn.style.display = !isPhotoPending && isMyTurn ? 'block' : 'none';
