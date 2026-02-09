@@ -320,7 +320,13 @@ function showInvestmentPanel() {
     const radios = document.querySelectorAll('.change-radio');
 
     // If not first round, show radio buttons and restrict to changing one investment
-    if (!gameState.isFirstRound && gameState.myPrivateState.investments.length > 0) {
+    const isAfterFirstRound = gameState.currentRound > 1;
+    const hasInvestments = gameState.myPrivateState && gameState.myPrivateState.investments && gameState.myPrivateState.investments.length > 0;
+
+    console.log('[Investment Game] Round:', gameState.currentRound, 'After first round:', isAfterFirstRound, 'Has investments:', hasInvestments);
+
+    if (isAfterFirstRound && hasInvestments) {
+        console.log('[Investment Game] Restricting to 1 investment change');
         // Show radio buttons
         radios.forEach(radio => {
             radio.style.display = 'inline-block';
@@ -378,6 +384,7 @@ function showInvestmentPanel() {
             });
         });
     } else {
+        console.log('[Investment Game] First round - all investments can be changed');
         // First round - hide radio buttons and enable all selects
         radios.forEach(radio => {
             radio.style.display = 'none';
