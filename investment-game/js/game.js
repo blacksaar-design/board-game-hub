@@ -1,5 +1,5 @@
 // Socket initialization is handled in index.html
-// socket is already window.io()
+const socket = window.io();
 
 // Game state
 let gameState = {
@@ -101,14 +101,14 @@ function startGame() {
 // Socket event handlers
 function handleGameCreated(data) {
     gameState.gameId = data.gameId;
-    gameState.playerId = socket.id;
+    gameState.playerId = data.playerId;
     updateLobby(data.state);
     showScreen('lobby');
 }
 
 function handleGameJoined(data) {
     gameState.gameId = data.gameId;
-    gameState.playerId = socket.id;
+    gameState.playerId = data.playerId;
     gameState.myPrivateState = data.privateState;
     updateLobby(data.state);
     showScreen('lobby');
@@ -276,7 +276,7 @@ function updateGameUI() {
     document.getElementById('phase-text').textContent = phaseText;
 
     // Update player money
-    const myPlayer = gameState.players.find(p => p.id === socket.id);
+    const myPlayer = gameState.players.find(p => p.id === gameState.playerId);
     if (myPlayer) {
         const moneyElement = document.getElementById('player-money');
         moneyElement.textContent = `$${myPlayer.money}`;
@@ -290,7 +290,7 @@ function updateGameUI() {
     if (gameState.phase === 'placement') {
         showInvestmentPanel();
     } else if (gameState.phase === 'card-assignment') {
-        const myPlayer = gameState.players.find(p => p.id === socket.id);
+        const myPlayer = gameState.players.find(p => p.id === gameState.playerId);
         if (myPlayer && !myPlayer.assignedCards) {
             showCardAssignment();
         } else {
@@ -473,7 +473,7 @@ function showRevealPanel(assetChanges) {
     });
 
     // Show money change for current player
-    const myPlayer = gameState.players.find(p => p.id === socket.id);
+    const myPlayer = gameState.players.find(p => p.id === gameState.playerId);
     if (myPlayer) {
         const moneyChangeDiv = document.createElement('div');
         moneyChangeDiv.style.marginTop = '20px';
@@ -513,7 +513,7 @@ function updateScoreboard() {
     sortedPlayers.forEach(player => {
         const scoreItem = document.createElement('div');
         scoreItem.className = 'score-item';
-        if (player.id === socket.id) {
+        if (player.id === gameState.playerId) {
             scoreItem.classList.add('current-player');
         }
 
