@@ -240,6 +240,26 @@ function getBonusActionShort(action) {
     return shorts[action] || action;
 }
 
+// Check if a photo roll is successful
+function checkPhotoSuccess(diceValue, bird, distance) {
+    for (let d = 0; d <= distance; d++) {
+        let req;
+        if (d === 0) req = bird.distance_far_dice;
+        if (d === 1) req = bird.distance_mid_dice;
+        if (d === 2) req = bird.distance_near_dice;
+
+        if (!req) continue;
+
+        if (req.includes('-')) {
+            const [min, max] = req.split('-').map(Number);
+            if (diceValue >= min && diceValue <= max) return true;
+        } else if (diceValue === parseInt(req)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // Export functions
 window.UIComponents = {
     createBirdCard,
@@ -257,5 +277,6 @@ window.UIComponents = {
     getInsectTypeName,
     getInsectEmoji,
     getBonusActionDescription,
-    getBonusActionShort
+    getBonusActionShort,
+    checkPhotoSuccess
 };

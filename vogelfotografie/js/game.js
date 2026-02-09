@@ -381,14 +381,29 @@ function updateActionButtons() {
 
     // Check for 3 matching insects for captureAll
     let canCaptureAll = false;
+    let captureCount = 0;
     if (isPhotoPending && isMyTurn && numInsects === 3) {
         const selectedInsects = gameState.myHand.insects.filter(i => gameState.selectedInsects.includes(i.id));
         const firstType = selectedInsects[0]?.card_type;
-        canCaptureAll = selectedInsects.every(i => i.card_type === firstType);
+        const allSameType = selectedInsects.every(i => i.card_type === firstType);
+
+        if (allSameType) {
+            // Count eligible birds using our new utility
+            gameState.visibleBirds.forEach(bird => {
+                const diceValue = parseInt(elements.dice.textContent); // Current dice value from UI
+                if (UI.checkPhotoSuccess(diceValue, bird, gameState.currentDistance)) {
+                    captureCount++;
+                }
+            });
+            canCaptureAll = captureCount > 0;
+        }
     }
 
     elements.captureAllBtn.style.display = canCaptureAll ? 'block' : 'none';
     elements.captureAllBtn.disabled = !canCaptureAll;
+    if (canCaptureAll) {
+        elements.captureAllBtn.innerHTML = `<span class="btn-icon">📸✨</span> ${captureCount} Vögel fangen`;
+    }
 
     // Attract button visibility (optional, but keep consistent)
     elements.attractBtn.style.display = !isPhotoPending && isMyTurn ? 'block' : 'none';
