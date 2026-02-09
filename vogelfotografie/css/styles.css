@@ -980,6 +980,28 @@ input[type="text"]:focus {
     box-shadow: var(--shadow-md);
 }
 
+.photos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-icon {
+    font-size: 1rem;
+    color: var(--text-tertiary);
+    transition: transform var(--transition-base);
+}
+
+.photos-header.expanded .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.area-title {
+    margin-bottom: 0 !important;
+}
+
 .score-badge {
     background: linear-gradient(135deg, var(--accent-color), hsl(var(--accent-hue), 70%, 50%));
     color: white;
@@ -987,13 +1009,25 @@ input[type="text"]:focus {
     border-radius: var(--radius-sm);
     font-weight: 700;
     font-size: 0.9rem;
+    margin-left: var(--spacing-sm);
 }
 
 .captured-birds-container {
     display: flex;
     flex-wrap: wrap;
     gap: var(--spacing-sm);
-    min-height: 80px;
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height var(--transition-slow), opacity var(--transition-base), margin-top var(--transition-base);
+    opacity: 1;
+    margin-top: var(--spacing-md);
+}
+
+.captured-birds-container.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    pointer-events: none;
 }
 
 .captured-bird-mini {

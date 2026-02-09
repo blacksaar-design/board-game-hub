@@ -59,7 +59,10 @@ const elements = {
     newGameBtn: document.getElementById('newGameBtn'),
 
     // Modal
-    modalClose: document.getElementById('modalClose')
+    modalClose: document.getElementById('modalClose'),
+
+    // Photos Toggle
+    togglePhotos: document.getElementById('togglePhotos')
 };
 
 // Internal client state
@@ -198,6 +201,13 @@ elements.attractBtn.addEventListener('click', () => {
 
 elements.modalClose.addEventListener('click', () => {
     UI.hideModal();
+});
+
+elements.togglePhotos.addEventListener('click', () => {
+    const container = elements.capturedBirds;
+    const header = elements.togglePhotos;
+    const isCollapsed = container.classList.toggle('collapsed');
+    header.classList.toggle('expanded', !isCollapsed);
 });
 
 // Socket Event Handlers

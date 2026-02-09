@@ -8,7 +8,9 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;800&family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 
@@ -157,8 +159,11 @@
                 </div>
 
                 <div class="player-photos">
-                    <h3 class="area-title">Deine Fotos <span id="playerScore" class="score-badge">0 Pkt</span></h3>
-                    <div id="capturedBirds" class="captured-birds-container"></div>
+                    <div class="photos-header" id="togglePhotos">
+                        <h3 class="area-title">Deine Fotos <span id="playerScore" class="score-badge">0 Pkt</span></h3>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div id="capturedBirds" class="captured-birds-container collapsed"></div>
                 </div>
             </div>
         </div>
