@@ -297,9 +297,13 @@ function updateGameUI() {
         showInvestmentPanel();
     } else if (gameState.phase === 'card-assignment') {
         const myPlayer = gameState.players.find(p => p.id === gameState.playerId);
+        console.log('[Investment Game] Card assignment phase - myPlayer:', myPlayer);
+        console.log('[Investment Game] assignedCards:', myPlayer ? myPlayer.assignedCards : 'no player');
         if (myPlayer && !myPlayer.assignedCards) {
+            console.log('[Investment Game] Showing card assignment panel');
             showCardAssignment();
         } else {
+            console.log('[Investment Game] Showing waiting panel');
             showWaitingPanel('Waiting for other players to assign cards...');
         }
     }
