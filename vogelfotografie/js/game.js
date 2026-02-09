@@ -310,17 +310,13 @@ function updateHandDisplay() {
     elements.insectHand.innerHTML = '';
     gameState.myHand.insects.forEach(insect => {
         const card = UI.createInsectCard(insect);
-        if (gameState.selectedInsects.includes(insect.id)) card.classList.add('selected');
-        card.addEventListener('click', () => toggleInsectSelection(insect.id, card));
-        elements.insectHand.innerHTML += card.outerHTML; // Simpler for now
-    });
-
-    // Re-attach listeners due to outerHTML hack
-    elements.insectHand.querySelectorAll('.insect-card').forEach(card => {
+        if (gameState.selectedInsects.includes(insect.id)) {
+            card.classList.add('selected');
+        }
         card.addEventListener('click', () => {
-            const id = parseInt(card.dataset.insectId);
-            toggleInsectSelection(id, card);
+            toggleInsectSelection(insect.id, card);
         });
+        elements.insectHand.appendChild(card);
     });
 
     elements.capturedBirds.innerHTML = '';
@@ -330,6 +326,9 @@ function updateHandDisplay() {
 
     const score = gameState.myHand.birds.reduce((sum, b) => sum + b.prestige_points, 0);
     elements.playerScore.textContent = `${score} Pkt`;
+
+    // Refresh button states after hand update
+    updateActionButtons();
 }
 
 function toggleInsectSelection(insectId, cardElement) {
@@ -349,14 +348,20 @@ function updateActionButtons() {
     const hasBird = !!gameState.currentBirdId;
     const numInsects = gameState.selectedInsects.length;
 
+    // Standard actions
     elements.sneakBtn.disabled = !isMyTurn || !hasBird || isPhotoPending;
     elements.photoBtn.disabled = !isMyTurn || !hasBird || isPhotoPending;
-
-    elements.confirmBtn.style.display = isPhotoPending && isMyTurn ? 'block' : 'none';
-    elements.applyBonusBtn.style.display = isPhotoPending && isMyTurn && numInsects === 1 ? 'block' : 'none';
-
-    // Attract: 2 insects selected
     elements.attractBtn.disabled = !isMyTurn || !hasBird || numInsects !== 2 || isPhotoPending;
+
+    // Photo pending actions
+    elements.confirmBtn.style.display = isPhotoPending && isMyTurn ? 'block' : 'none';
+    elements.confirmBtn.disabled = !isMyTurn || !isPhotoPending;
+
+    elements.applyBonusBtn.style.display = isPhotoPending && isMyTurn ? 'block' : 'none';
+    elements.applyBonusBtn.disabled = !isMyTurn || !isPhotoPending || numInsects !== 1;
+
+    // Attract button visibility (optional, but keep consistent)
+    elements.attractBtn.style.display = !isPhotoPending && isMyTurn ? 'block' : 'none';
 }
 
 // Initial status
