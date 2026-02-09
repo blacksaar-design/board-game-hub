@@ -263,6 +263,14 @@ function createAssetTrack(asset, index) {
 }
 
 function updateGameUI() {
+    // Ensure myPrivateState is initialized
+    if (!gameState.myPrivateState) {
+        gameState.myPrivateState = {
+            cards: { up: 5, down: 5 },
+            investments: []
+        };
+    }
+
     // Update round
     document.getElementById('current-round').textContent = gameState.currentRound;
 
