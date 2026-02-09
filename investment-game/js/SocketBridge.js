@@ -58,7 +58,7 @@ class SocketBridge {
         }
     }
 
-    async createRoom(playerName, callback) {
+    async createRoom(data, callback) {
         this.isHost = true;
         // Generate a 6-char room code
         this.roomCode = Math.random().toString(36).substr(2, 6).toUpperCase();
@@ -71,8 +71,9 @@ class SocketBridge {
         this.peer.on('open', (id) => {
             this._updateStatus(true, 'Host active');
             // Host joins their own room
-            this.hostLogic.addPlayer(this.playerId, typeof playerName === 'object' ? playerName.playerName : playerName, (res) => {
-                callback({ success: true, roomCode: this.roomCode, gameId: this.roomCode, playerId: this.playerId, state: this.hostLogic.getState() });
+            const playerName = typeof data === 'object' ? data.playerName : data;
+            this.hostLogic.addPlayer(this.playerId, playerName, (res) => {
+                if (callback) callback({ success: true, roomCode: this.roomCode, gameId: this.roomCode, playerId: this.playerId, state: this.hostLogic.getState() });
             });
         });
 
@@ -86,7 +87,7 @@ class SocketBridge {
 
         this.peer.on('error', (err) => {
             console.error('[SocketBridge] Peer Error:', err);
-            callback({ success: false, error: 'Failed to create room: ' + err.type });
+            if (callback) callback({ success: false, error: 'Failed to create room: ' + err.type });
         });
     }
 
