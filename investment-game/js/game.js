@@ -397,13 +397,21 @@ function showInvestmentPanelReadOnly() {
     const selects = document.querySelectorAll('.investment-select');
     const radios = document.querySelectorAll('.change-radio');
 
-    selects.forEach((select, index) => {
-        const currentInvestment = gameState.myPrivateState.investments[index];
-        if (currentInvestment) {
-            select.value = currentInvestment.asset;
-        }
-        select.disabled = true;
-    });
+    // Safety check for myPrivateState
+    if (gameState.myPrivateState && gameState.myPrivateState.investments) {
+        selects.forEach((select, index) => {
+            const currentInvestment = gameState.myPrivateState.investments[index];
+            if (currentInvestment) {
+                select.value = currentInvestment.asset;
+            }
+            select.disabled = true;
+        });
+    } else {
+        // If no private state, just disable all selects
+        selects.forEach(select => {
+            select.disabled = true;
+        });
+    }
 
     radios.forEach(radio => {
         radio.style.display = 'none';
@@ -422,26 +430,31 @@ function showCardAssignment() {
     document.getElementById('reveal-panel').classList.add('hidden');
 
     const cardAssignmentArea = document.getElementById('card-assignment-area');
-    cardAssignmentArea.innerHTML = '';
 
-    gameState.assets.forEach((asset, index) => {
-        const row = document.createElement('div');
-        row.className = 'card-assignment-row';
-        row.innerHTML = `
-      <span class="card-assignment-label">${asset.name}</span>
-      <div class="card-buttons">
-        <button class="card-btn up" data-asset="${index}" data-type="up">↑</button>
-        <button class="card-btn down" data-asset="${index}" data-type="down">↓</button>
-      </div>
-    `;
+    // Only render if not already rendered (to prevent re-rendering on state updates)
+    if (cardAssignmentArea.children.length === 0) {
+        console.log('[Investment Game] Rendering card assignment buttons');
+        gameState.assets.forEach((asset, index) => {
+            const row = document.createElement('div');
+            row.className = 'card-assignment-row';
+            row.innerHTML = `
+          <span class="card-assignment-label">${asset.name}</span>
+          <div class="card-buttons">
+            <button class="card-btn up" data-asset="${index}" data-type="up">↑</button>
+            <button class="card-btn down" data-asset="${index}" data-type="down">↓</button>
+          </div>
+        `;
 
-        cardAssignmentArea.appendChild(row);
-    });
+            cardAssignmentArea.appendChild(row);
+        });
 
-    // Add event listeners to card buttons
-    document.querySelectorAll('.card-btn').forEach(btn => {
-        btn.addEventListener('click', assignCard);
-    });
+        // Add event listeners to card buttons
+        document.querySelectorAll('.card-btn').forEach(btn => {
+            btn.addEventListener('click', assignCard);
+        });
+    } else {
+        console.log('[Investment Game] Card buttons already rendered, skipping');
+    }
 
     updateCardCounts();
 }
