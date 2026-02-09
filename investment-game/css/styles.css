@@ -471,8 +471,21 @@ body {
 }
 
 .card-btn.assigned {
-  opacity: 1;
   font-weight: bold;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card-btn.up.assigned {
+  background: #27ae60;
+  color: white;
+  border-color: #27ae60;
+}
+
+.card-btn.down.assigned {
+  background: #e74c3c;
+  color: white;
+  border-color: #e74c3c;
 }
 
 /* Waiting Panel */
