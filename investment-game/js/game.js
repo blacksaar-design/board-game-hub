@@ -588,14 +588,21 @@ function updateScoreboard() {
 function updateCardCounts() {
     ensurePrivateState();
 
-    // Update button states
-    document.querySelectorAll('.card-btn.up').forEach(btn => {
-        btn.disabled = gameState.myPrivateState.cards.up === 0;
-    });
+    // Update button states only if they exist
+    const upButtons = document.querySelectorAll('.card-btn.up');
+    const downButtons = document.querySelectorAll('.card-btn.down');
 
-    document.querySelectorAll('.card-btn.down').forEach(btn => {
-        btn.disabled = gameState.myPrivateState.cards.down === 0;
-    });
+    if (upButtons.length > 0) {
+        upButtons.forEach(btn => {
+            btn.disabled = gameState.myPrivateState.cards.up === 0;
+        });
+    }
+
+    if (downButtons.length > 0) {
+        downButtons.forEach(btn => {
+            btn.disabled = gameState.myPrivateState.cards.down === 0;
+        });
+    }
 }
 
 // Game actions
