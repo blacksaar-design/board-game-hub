@@ -221,7 +221,7 @@ function updateLobby(state) {
     });
 
     const startBtn = document.getElementById('start-game-btn');
-    startBtn.disabled = state.players.length < 2;
+    startBtn.disabled = state.players.length < 1;
 }
 
 function initializeGameBoard() {
