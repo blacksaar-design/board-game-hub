@@ -195,6 +195,7 @@ elements.captureAllBtn.addEventListener('click', () => {
 
     socket.emit('captureAll', { insectIds: gameState.selectedInsects }, (response) => {
         if (response.success) {
+            isPhotoPending = false;
             UI.showModal('📸✨', 'Mega-Foto!', `Du hast ${response.count} Vögel gleichzeitig fotografiert!`);
             gameState.selectedInsects = [];
             requestHandUpdate();

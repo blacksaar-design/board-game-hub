@@ -193,6 +193,8 @@ class VogelfotografieHost {
     }
 
     handleResolvePhoto(senderId, callback) {
+        if (!this.gameState.pendingAction) return callback({ success: false, error: 'Keine Aktion ausstehend' });
+
         const action = this.gameState.pendingAction;
         const bird = this.gameState.visibleBirds.find(b => b.id === action.birdId);
         const player = this.players.find(p => p.playerId === senderId);
