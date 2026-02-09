@@ -204,6 +204,12 @@ class VogelfotografieHost {
         } else {
             this.gameState.birdDiscard.push(bird.id);
             this._replaceBird(bird.id);
+
+            // Draw compensatory insect
+            if (this.gameState.insectDeck.length > 0) {
+                player.hand.insects.push(this.gameState.insectDeck.shift());
+            }
+
             callback({ success: true, result: 'scared' });
         }
 
