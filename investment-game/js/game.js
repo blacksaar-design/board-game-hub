@@ -184,6 +184,7 @@ function handleReveal(data) {
     gameState.assets = data.state.assets;
     gameState.players = data.state.players;
     gameState.phase = data.state.phase;
+    gameState.currentRound = data.state.currentRound;
 
     if (data.gameEnded) {
         showGameOver(data.winner, data.state.players);
