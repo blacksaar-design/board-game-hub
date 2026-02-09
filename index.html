@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blacksaar Design - Board Game Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;800&family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161B22;
+            --primary-color: #58A6FF;
+            --text-primary: #F0F6FC;
+            --text-secondary: #8B949E;
+            --accent-color: #3FB950;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(88, 166, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(63, 185, 80, 0.05) 0%, transparent 40%);
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+        }
+
+        header {
+            margin-bottom: 4rem;
+        }
+
+        h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .game-card {
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary-color);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary-color);
+            background: #1c2128;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .game-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .game-icon {
+            font-size: 4rem;
+        }
+
+        .game-title {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .game-desc {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .badge {
+            background: rgba(88, 166, 255, 0.1);
+            color: var(--primary-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        footer {
+            margin-top: 5rem;
+            color: var(--text-tertiary);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Board Game Hub</h1>
+            <p class="subtitle">by Blacksaar Design</p>
+        </header>
+
+        <div class="game-grid">
+            <a href="vogelfotografie/" class="game-card">
+                <span class="game-icon">🐦</span>
+                <div class="game-title">Vogelfotografie</div>
+                <p class="game-desc">Ein strategisches Online-Brettspiel über die Kunst der Vogelfotografie. Spiele mit
+                    bis zu 4 Freunden gleichzeitig.</p>
+                <span class="badge">Online Multiplayer</span>
+            </a>
+
+            <!-- Hier können später weitere Spiele hinzugefügt werden -->
+            <div class="game-card" style="opacity: 0.5; cursor: default;">
+                <span class="game-icon">🎲</span>
+                <div class="game-title">Mehr in Kürze</div>
+                <p class="game-desc">Weitere digitale Brettspiele sind bereits in der Entwicklung für diesen Hub.</p>
+            </div>
+        </div>
+
+        <footer>
+            &copy; 2026 Blacksaar Design
+        </footer>
+    </div>
+</body>
+
+</html>
