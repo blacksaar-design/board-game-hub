@@ -17,6 +17,16 @@ let gameState = {
     isFirstRound: true
 };
 
+// Helper function to ensure myPrivateState is always initialized
+function ensurePrivateState() {
+    if (!gameState.myPrivateState) {
+        gameState.myPrivateState = {
+            cards: { up: 5, down: 5 },
+            investments: []
+        };
+    }
+}
+
 // Asset names for reference
 const ASSET_NAMES = ['Gold', 'Oil', 'Tech', 'Real Estate', 'Crypto'];
 
@@ -264,12 +274,7 @@ function createAssetTrack(asset, index) {
 
 function updateGameUI() {
     // Ensure myPrivateState is initialized
-    if (!gameState.myPrivateState) {
-        gameState.myPrivateState = {
-            cards: { up: 5, down: 5 },
-            investments: []
-        };
-    }
+    ensurePrivateState();
 
     // Update round
     document.getElementById('current-round').textContent = gameState.currentRound;
@@ -565,6 +570,7 @@ function updateScoreboard() {
 }
 
 function updateCardCounts() {
+    ensurePrivateState();
     document.getElementById('up-cards-count').textContent = gameState.myPrivateState.cards.up;
     document.getElementById('down-cards-count').textContent = gameState.myPrivateState.cards.down;
 
