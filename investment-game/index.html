@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investment Board Game</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+  <!-- Setup Screen -->
+  <div id="setup-screen" class="screen active">
+    <div class="setup-container">
+      <h1>Investment Board Game</h1>
+      <div class="setup-form">
+        <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+        <button id="create-game-btn" class="btn btn-primary">Create Game</button>
+        <div class="divider">OR</div>
+        <input type="text" id="game-code" placeholder="Enter game code" maxlength="6">
+        <button id="join-game-btn" class="btn btn-secondary">Join Game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lobby Screen -->
+  <div id="lobby-screen" class="screen">
+    <div class="lobby-container">
+      <h1>Game Lobby</h1>
+      <div class="game-code-display">
+        <span>Game Code:</span>
+        <span id="lobby-game-code" class="code"></span>
+      </div>
+      <div class="players-list">
+        <h2>Players (<span id="player-count">0</span>/6)</h2>
+        <ul id="players-list-items"></ul>
+      </div>
+      <button id="start-game-btn" class="btn btn-primary">Start Game</button>
+      <p class="info-text">Need 2-6 players to start</p>
+    </div>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="game-screen" class="screen">
+    <div class="game-container">
+      <!-- Header -->
+      <div class="game-header">
+        <div class="round-info">
+          <span>Round <span id="current-round">1</span>/12</span>
+        </div>
+        <div class="phase-info">
+          <span id="phase-text">Place Investments</span>
+        </div>
+      </div>
+
+      <!-- Main Game Board -->
+      <div class="game-board">
+        <h2>Asset Market</h2>
+        <div class="assets-container" id="assets-container">
+          <!-- Assets will be dynamically generated -->
+        </div>
+      </div>
+
+      <!-- Player Area -->
+      <div class="player-area">
+        <div class="player-info">
+          <h3 id="player-name-display">Your Name</h3>
+          <div class="money-display">
+            <span>Money:</span>
+            <span id="player-money" class="money">$0</span>
+          </div>
+        </div>
+
+        <!-- Investment Board (Hidden from others) -->
+        <div id="investment-panel" class="investment-panel">
+          <h3>Your Investments (Hidden)</h3>
+          <div class="investment-slots">
+            <div class="investment-slot" data-slot="0">
+              <div class="slot-header">
+                <input type="radio" name="change-investment" value="0" class="change-radio" style="display:none;">
+                <span class="slot-label">Long 1</span>
+              </div>
+              <select class="investment-select" data-type="long" data-slot="0">
+                <option value="">Select Asset</option>
+              </select>
+            </div>
+            <div class="investment-slot" data-slot="1">
+              <div class="slot-header">
+                <input type="radio" name="change-investment" value="1" class="change-radio" style="display:none;">
+                <span class="slot-label">Long 2</span>
+              </div>
+              <select class="investment-select" data-type="long" data-slot="1">
+                <option value="">Select Asset</option>
+              </select>
+            </div>
+            <div class="investment-slot" data-slot="2">
+              <div class="slot-header">
+                <input type="radio" name="change-investment" value="2" class="change-radio" style="display:none;">
+                <span class="slot-label">Short</span>
+              </div>
+              <select class="investment-select" data-type="short" data-slot="2">
+                <option value="">Select Asset</option>
+              </select>
+            </div>
+          </div>
+          <button id="confirm-investments-btn" class="btn btn-primary">Confirm Investments</button>
+        </div>
+
+        <!-- Card Assignment Panel -->
+        <div id="card-panel" class="card-panel hidden">
+          <h3>Assign Your Cards</h3>
+          <div class="cards-remaining">
+            <div class="card-count">
+              <span>↑ Up Cards:</span>
+              <span id="up-cards-count">5</span>
+            </div>
+            <div class="card-count">
+              <span>↓ Down Cards:</span>
+              <span id="down-cards-count">5</span>
+            </div>
+          </div>
+          <div class="card-assignment-area" id="card-assignment-area">
+            <!-- Card assignment buttons will be generated -->
+          </div>
+        </div>
+
+        <!-- Waiting Panel -->
+        <div id="waiting-panel" class="waiting-panel hidden">
+          <div class="spinner"></div>
+          <p id="waiting-text">Waiting for other players...</p>
+        </div>
+
+        <!-- Reveal Panel -->
+        <div id="reveal-panel" class="reveal-panel hidden">
+          <h3>Round Results</h3>
+          <div id="reveal-content"></div>
+          <button id="next-round-btn" class="btn btn-primary">Continue to Next Round</button>
+        </div>
+      </div>
+
+      <!-- Scoreboard -->
+      <div class="scoreboard">
+        <h3>Scoreboard</h3>
+        <div id="scoreboard-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="game-over-screen" class="screen">
+    <div class="game-over-container">
+      <h1>Game Over!</h1>
+      <div class="winner-display">
+        <h2 id="winner-name"></h2>
+        <p id="winner-money"></p>
+      </div>
+      <div class="final-scores">
+        <h3>Final Scores</h3>
+        <div id="final-scores-list"></div>
+      </div>
+      <button id="new-game-btn" class="btn btn-primary">New Game</button>
+    </div>
+  </div>
+
+  <div id="p2p-status"
+    style="position: fixed; bottom: 10px; right: 10px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888;">
+    <span id="statusDot" style="width: 8px; height: 8px; border-radius: 50%; background: #ccc;"></span>
+    <span id="statusText">P2P Hub Edition</span>
+  </div>
+
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="js/SocketBridge.js"></script>
+  <script src="js/InvestmentHost.js"></script>
+  <script>
+    // Initialize P2P before game.js loads
+    const bridge = window.initializeP2P(InvestmentHost);
+  </script>
+  <script src="js/game.js"></script>
+</body>
+
+</html>
