@@ -466,26 +466,29 @@ body {
 }
 
 .card-btn:disabled {
-  opacity: 0.3;
+  opacity: 0.2;
   cursor: not-allowed;
+  filter: grayscale(100%);
 }
 
 .card-btn.assigned {
   font-weight: bold;
   transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 .card-btn.up.assigned {
-  background: #27ae60;
-  color: white;
-  border-color: #27ae60;
+  background: #27ae60 !important;
+  color: white !important;
+  border-color: #27ae60 !important;
 }
 
 .card-btn.down.assigned {
-  background: #e74c3c;
-  color: white;
-  border-color: #e74c3c;
+  background: #e74c3c !important;
+  color: white !important;
+  border-color: #e74c3c !important;
 }
 
 /* Waiting Panel */
