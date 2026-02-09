@@ -73,7 +73,19 @@ class SocketBridge {
             // Host joins their own room
             const playerName = typeof data === 'object' ? data.playerName : data;
             this.hostLogic.addPlayer(this.playerId, playerName, (res) => {
-                if (callback) callback({ success: true, roomCode: this.roomCode, gameId: this.roomCode, playerId: this.playerId, state: this.hostLogic.getState() });
+                const eventData = {
+                    success: true,
+                    roomCode: this.roomCode,
+                    gameId: this.roomCode,
+                    playerId: this.playerId,
+                    state: this.hostLogic.getState()
+                };
+
+                // Trigger the game-created event
+                this._triggerLocalHandlers('game-created', eventData);
+
+                // Also call callback if provided
+                if (callback) callback(eventData);
             });
         });
 
@@ -107,6 +119,11 @@ class SocketBridge {
                     if (res && res.success) {
                         this.playerId = res.playerId;
                     }
+
+                    // Trigger the game-joined event
+                    this._triggerLocalHandlers('game-joined', res);
+
+                    // Also call callback if provided
                     if (callback) callback(res);
                 });
             });
