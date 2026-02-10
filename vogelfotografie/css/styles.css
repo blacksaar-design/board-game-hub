@@ -1241,34 +1241,33 @@ input[type="text"]:focus {
         font-size: 0.8rem;
     }
 
-    /* 1. Bird Cards: Maximized */
+    /* 1. Bird Cards: Maximized (2 columns) */
     .birds-area {
         margin-bottom: var(--spacing-sm);
     }
 
     .area-title {
-        font-size: 1rem;
-        margin-bottom: 2px;
+        display: none;
     }
 
     .bird-cards-container {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 4px;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px;
     }
 
     .bird-card {
         width: 100%;
         min-width: 0;
-        padding: 4px;
+        padding: 6px;
     }
 
     .bird-card-header {
-        margin-bottom: 2px;
+        margin-bottom: 4px;
     }
 
     .bird-name {
-        font-size: 0.7rem;
-        line-height: 1.1;
+        font-size: 0.85rem;
+        line-height: 1.2;
     }
 
     .bird-points {
