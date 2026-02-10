@@ -1243,7 +1243,7 @@ input[type="text"]:focus {
 
     /* 1. Bird Cards: Maximized (2 columns) */
     .birds-area {
-        margin-bottom: var(--spacing-sm);
+        margin-bottom: 2px;
     }
 
     .area-title {
@@ -1298,11 +1298,16 @@ input[type="text"]:focus {
         font-size: 0.75rem;
     }
 
+    .selected-bird-info {
+        display: none !important;
+    }
+
     /* 2. Action Buttons: 2x2 Grid, tighter */
     .action-buttons {
         display: grid;
         grid-template-columns: 1fr 1fr !important;
         gap: var(--spacing-xs);
+        margin-top: 0;
     }
 
     .btn-action {
