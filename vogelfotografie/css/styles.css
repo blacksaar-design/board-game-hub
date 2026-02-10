@@ -1215,16 +1215,127 @@ input[type="text"]:focus {
 }
 
 @media (max-width: 768px) {
+    .game-container {
+        padding: 0 var(--spacing-sm);
+    }
+
     .game-title h1 {
-        font-size: 2.5rem;
+        font-size: 2rem;
     }
 
     .room-code {
-        font-size: 2.5rem;
-        letter-spacing: 4px;
+        font-size: 2rem;
+        letter-spacing: 2px;
     }
 
     .players-info {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-sm);
+    }
+
+    .player-card {
+        padding: var(--spacing-sm);
+        font-size: 0.9rem;
+    }
+
+    /* 1. Bird Cards: 1/3 size and side-by-side */
+    .bird-cards-container {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: var(--spacing-xs);
+    }
+
+    .bird-card {
+        width: 100%;
+        min-width: 0;
+        /* Allow shrinking */
+    }
+
+    .bird-card-insect-icon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .bird-insect-type {
+        font-size: 0.7rem;
+        padding: 2px 4px;
+    }
+
+    .distance-dice {
+        font-size: 0.9rem;
+    }
+
+    /* 2. Action Buttons: 2x2 Grid */
+    .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr !important;
+        gap: var(--spacing-sm);
+    }
+
+    /* Make capture all span full width if needed, or keep 2x2 */
+    #captureAllBtn {
+        grid-column: span 2;
+    }
+
+    /* Confirm button also full width */
+    #confirmBtn {
+        grid-column: span 2;
+    }
+
+    /* 3. Distance Icons: Smaller */
+    .distance-tracker {
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .distance-icon {
+        font-size: 1.5rem;
+        /* Smaller icons */
+    }
+
+    .distance-label {
+        font-size: 0.75rem;
+    }
+
+    /* 4. Insect Cards: Smaller and side-by-side */
+    .insect-cards-container {
+        gap: var(--spacing-xs);
+        justify-content: center;
+    }
+
+    .insect-card {
+        min-width: 80px;
+        /* Much smaller */
+        padding: var(--spacing-xs);
+        flex: 1 0 auto;
+        /* Allow flexible sizing */
+        max-width: 110px;
+    }
+
+    .insect-card-content {
+        height: 80px;
+    }
+
+    .insect-card-illustration {
+        width: 32px;
+        height: 32px;
+    }
+
+    .insect-type {
+        font-size: 1rem;
+    }
+
+    .insect-bonus {
+        font-size: 0.7rem;
+    }
+
+    /* Dice Area Compact */
+    .dice-area {
+        min-height: 100px;
+    }
+
+    .dice {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
     }
 }
