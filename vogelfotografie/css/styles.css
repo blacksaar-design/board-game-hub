@@ -1241,7 +1241,7 @@ input[type="text"]:focus {
         font-size: 0.8rem;
     }
 
-    /* 1. Bird Cards: Maximized (2 columns) */
+    /* 1. Bird Cards: Maximized (3 columns) */
     .birds-area {
         margin-bottom: 2px;
     }
@@ -1251,14 +1251,16 @@ input[type="text"]:focus {
     }
 
     .bird-cards-container {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 6px;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 2px;
+        /* Ultra tight gap */
     }
 
     .bird-card {
         width: 100%;
         min-width: 0;
-        padding: 6px;
+        padding: 2px;
+        /* Minimal padding */
     }
 
     .bird-card-header {
