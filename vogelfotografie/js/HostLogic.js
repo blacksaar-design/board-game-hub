@@ -406,9 +406,10 @@ class VogelfotografieHost {
 
     _playBotTurnLegendary(bot, botId) {
         // Legendary Strategy: "Master of Attraction"
-        // Priority: Use "Attract" (2 insects) to capture high value birds (4+ points) WITHOUT rolling dice.
+        // Priority: Use "Attract" (2 insects) to capture high value birds (3+ points) WITHOUT rolling dice.
+        // User confirmed max points is 3. So we target 3s.
 
-        const highValueBirds = this.gameState.visibleBirds.filter(b => b.prestige_points >= 4);
+        const highValueBirds = this.gameState.visibleBirds.filter(b => b.prestige_points >= 3);
 
         for (const bird of highValueBirds) {
             // Do we have 2 insects of the correct type?
