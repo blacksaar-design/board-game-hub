@@ -393,10 +393,129 @@ class VogelfotografieHost {
     }
 
     _continueBotTurn(bot, botId) {
-        if (bot.difficulty === 'medium') {
+        if (bot.difficulty === 'hard') {
+            this._playBotTurnHard(bot, botId);
+        } else if (bot.difficulty === 'medium') {
             this._playBotTurnMedium(bot, botId);
         } else {
             this._playBotTurnEasy(bot, botId);
+        }
+    }
+
+    _playBotTurnHard(bot, botId) {
+        // Hard Bot Strategy: Expected Value Maximization
+        // 1. Calculate EV for every visible bird (Score * Probability of Capture)
+        // 2. Consider "Attract" if all EVs are low.
+
+        const distance = this.gameState.currentDistance;
+        let bestMove = { type: 'wait', value: 0 };
+
+        // Evaluate Birds
+        let bestBird = null;
+        let maxEV = -1;
+
+        this.gameState.visibleBirds.forEach(bird => {
+            const prob = this._calculateCaptureProbability(bird, distance, bot.hand.insects);
+            const ev = bird.prestige_points * prob;
+
+            if (ev > maxEV) {
+                maxEV = ev;
+                bestBird = bird;
+            }
+        });
+
+        // Thresholds
+        // If Max EV is very low (< 0.5) and we have insects, Attract might be better (EV ~ ? Unknown but potentially higher next turn)
+        // Sneak EV = 0.66 * (Ev at distance+1) - roughly.
+
+        if (!bestBird || (maxEV < 1.0 && bot.hand.insects.length > 1 && this.gameState.birdDeckCount > 0)) {
+            // Board is trash, flush it
+            this._botAttract(bot, botId);
+            return;
+        }
+
+        // Decision: Sneak vs Photo
+        // Compare EV of Photo Now vs EV of Sneak (Success chance * EV at next distance)
+        const photoProb = this._calculateCaptureProbability(bestBird, distance, bot.hand.insects);
+        const photoEV = bestBird.prestige_points * photoProb;
+
+        // Estimate Sneak EV
+        // Sneak success = 4/6 = 0.66
+        // Next distance EV roughly estimated (simplified)
+        // If dist=2, next is max, so Sneak EV is 0.
+        // If dist<2, next dist prob is likely higher.
+
+        let sneakEV = 0;
+        if (distance < 2) {
+            const nextDistProb = this._calculateCaptureProbability(bestBird, distance + 1, bot.hand.insects);
+            sneakEV = 0.66 * (bestBird.prestige_points * nextDistProb);
+            // Discount slightly for turn delay? No, keep it simple.
+        }
+
+        console.log(`[Host] Bot ${bot.playerName} Analysis: BestBird=${bestBird.name}, PhotoEV=${photoEV.toFixed(2)}, SneakEV=${sneakEV.toFixed(2)}`);
+
+        if (photoEV >= sneakEV && photoProb > 0.3) {
+            // Take Photo if better EV and at least decent chance (don't waste turn on 5% yolo unless sneak is worse)
+            this._botTakePhoto(bot, botId, bestBird, distance, true);
+        } else {
+            // If sneak is better, or photo is terrible
+            // But if dist=2, we MUST photo (sneakEV is 0).
+            if (distance === 2) {
+                this._botTakePhoto(bot, botId, bestBird, distance, true);
+            } else {
+                this._botSneak(bot, botId, bestBird);
+            }
+        }
+    }
+
+    _calculateCaptureProbability(bird, distance, insects) {
+        // 1. Get requirements
+        let req;
+        if (distance === 0) req = bird.distance_far_dice;
+        if (distance === 1) req = bird.distance_mid_dice;
+        if (distance === 2) req = bird.distance_near_dice;
+        if (!req) return 0;
+
+        // 2. Base Probability (Dice only)
+        let winningRolls = 0;
+
+        // 3. Insect Boost
+        // How many rolls can be FIXED by our insects?
+        // We simulate all 6 dice rolls.
+
+        for (let roll = 1; roll <= 6; roll++) {
+            let success = false;
+
+            // Check raw roll
+            if (this._checkRollMatch(roll, req)) {
+                success = true;
+            } else {
+                // Check if any insect fixes it
+                for (const insect of insects) {
+                    let mod = roll;
+                    if (insect.bonus_action === 'increase') mod = Math.min(6, roll + 1);
+                    if (insect.bonus_action === 'decrease') mod = Math.max(1, roll - 1);
+                    if (insect.bonus_action === 'flip') mod = 7 - roll;
+
+                    if (this._checkRollMatch(mod, req)) {
+                        success = true;
+                        break; // Found a fix
+                    }
+                }
+            }
+
+            if (success) winningRolls++;
+        }
+
+        return winningRolls / 6.0;
+    }
+
+    _checkRollMatch(val, req) {
+        if (req.includes('-')) {
+            const [min, max] = req.split('-').map(Number);
+            return val >= min && val <= max;
+        } else {
+            return val === parseInt(req);
         }
     }
 

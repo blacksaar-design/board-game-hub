@@ -283,6 +283,7 @@ function ensureBotButton() {
         select.innerHTML = `
             <option value="easy">🤖 Leicht</option>
             <option value="medium">🧠 Mittel</option>
+            <option value="hard">🏆 Profi</option>
         `;
 
         // Add Button
