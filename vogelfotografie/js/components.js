@@ -6,39 +6,12 @@ function createBirdCard(bird, selectable = true) {
     card.className = 'bird-card';
     card.dataset.birdId = bird.id;
 
-    const farReq = formatDiceRequirement(bird.distance_far_dice);
-    const midReq = formatDiceRequirement(bird.distance_mid_dice);
-    const nearReq = formatDiceRequirement(bird.distance_near_dice);
-
     card.innerHTML = `
-        <div class="bird-card-header">
-            <div class="bird-points">${bird.prestige_points}</div>
-        </div>
         <div class="bird-card-image-container">
             <img src="assets/cards/birds/${bird.id}.png" alt="${bird.name}" class="bird-card-illustration" onerror="this.onerror=null; this.src='assets/bird_placeholder.png';">
             <div class="card-interaction-overlay"></div>
             <div class="card-status-badges">
                 ${bird.captured ? '<span class="status-badge captured">Abfotografiert</span>' : ''}
-            </div>
-            <div class="bird-insect-type">
-                <span class="insect-emoji">${getInsectEmoji(bird.insect_type)}</span>
-            </div>
-        </div>
-        <div class="bird-card-body">
-            <div class="bird-name">${bird.name}</div>
-            <div class="bird-distances">
-                <div class="distance-requirement ${!bird.distance_far_dice ? 'unavailable' : ''}">
-                    <div class="distance-label-small">Fern</div>
-                    <div class="distance-dice">${farReq}</div>
-                </div>
-                <div class="distance-requirement ${!bird.distance_mid_dice ? 'unavailable' : ''}">
-                    <div class="distance-label-small">Mittel</div>
-                    <div class="distance-dice">${midReq}</div>
-                </div>
-                <div class="distance-requirement ${!bird.distance_near_dice ? 'unavailable' : ''}">
-                    <div class="distance-label-small">Nah</div>
-                    <div class="distance-dice">${nearReq}</div>
-                </div>
             </div>
         </div>
     `;
