@@ -304,7 +304,12 @@ class VogelfotografieHost {
         }
 
         const botId = `bot_${Date.now()}`;
-        const diffLabel = difficulty === 'medium' ? 'Mittel' : 'Leicht';
+
+        let diffLabel = 'Leicht';
+        if (difficulty === 'medium') diffLabel = 'Mittel';
+        if (difficulty === 'hard') diffLabel = 'Profi';
+        if (difficulty === 'legendary') diffLabel = 'Legendär';
+
         const botName = `Robo-Knipser ${this.players.length + 1} (${diffLabel})`;
 
         const botPlayer = {
