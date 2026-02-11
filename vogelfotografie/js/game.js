@@ -62,13 +62,26 @@ const elements = {
     modalClose: document.getElementById('modalClose'),
 
     // Photos Toggle
-    togglePhotos: document.getElementById('togglePhotos')
+    togglePhotos: document.getElementById('togglePhotos'),
+
+    // Bot
+    addBotBtn: document.getElementById('addBotBtn')
 };
 
 // Internal client state
 let isPhotoPending = false;
 
 // Event Listeners - Lobby
+if (elements.addBotBtn) {
+    elements.addBotBtn.addEventListener('click', () => {
+        socket.emit('addBot', {}, (response) => {
+            if (!response.success) {
+                UI.showModal('❌', 'Fehler', response.error);
+            }
+        });
+    });
+}
+
 elements.createRoomBtn.addEventListener('click', () => {
     const playerName = elements.createPlayerName.value.trim();
     if (!playerName) {
@@ -76,12 +89,18 @@ elements.createRoomBtn.addEventListener('click', () => {
         return;
     }
 
+    if (elements.addBotBtn) elements.addBotBtn.style.display = 'block';
+
     socket.emit('createRoom', playerName, (response) => {
         if (response.success) {
             gameState.playerId = response.playerId;
             gameState.playerName = playerName;
             gameState.roomCode = response.roomCode;
             elements.displayRoomCode.textContent = response.roomCode;
+
+            // Force show Bot button for Host
+            if (elements.addBotBtn) elements.addBotBtn.style.display = 'block';
+
             UI.showScreen('waitingScreen');
         } else {
             UI.showModal('❌', 'Fehler', response.error);
@@ -97,6 +116,8 @@ elements.joinRoomBtn.addEventListener('click', () => {
         UI.showModal('⚠️', 'Eingabe unvollständig', 'Bitte gib einen Raum-Code und deinen Namen ein');
         return;
     }
+
+    if (elements.addBotBtn) elements.addBotBtn.style.display = 'none';
 
     socket.emit('joinRoom', { roomCode, playerName }, (response) => {
         if (response.success) {
@@ -224,9 +245,50 @@ socket.on('playerListUpdate', (players) => {
     });
     elements.playerCount.textContent = players.length;
 
-    // Auto-show/hide start button only for host (Room creator has no special flag here, but SocketBridge handles it)
-    elements.startGameBtn.style.display = socket.isHost ? 'block' : 'none';
+    // Auto-show/hide start button only for host
+    const isHost = socket.isHost;
+    elements.startGameBtn.style.display = isHost ? 'block' : 'none';
+
+    // Force Bot Button Logic
+    if (isHost) {
+        ensureBotButton();
+    } else {
+        const btn = document.getElementById('addBotBtn');
+        if (btn) btn.style.display = 'none';
+    }
 });
+
+function ensureBotButton() {
+    let btn = document.getElementById('addBotBtn');
+
+    if (!btn) {
+        // If button is missing (e.g. wiped by screen update), recreate it
+        btn = document.createElement('button');
+        btn.id = 'addBotBtn';
+        btn.className = 'btn btn-secondary';
+        btn.style.marginBottom = '10px';
+        btn.style.width = '100%';
+        btn.innerHTML = '🤖 Bot hinzufügen';
+
+        // Find insertion point
+        const startGameBtn = document.getElementById('startGameBtn');
+        if (startGameBtn && startGameBtn.parentNode) {
+            startGameBtn.parentNode.insertBefore(btn, startGameBtn);
+
+            // Re-attach listener
+            btn.addEventListener('click', () => {
+                socket.emit('addBot', {}, (response) => {
+                    if (!response.success) {
+                        UI.showModal('❌', 'Fehler', response.error);
+                    }
+                });
+            });
+        }
+    }
+
+    // Force visibility
+    if (btn) btn.style.display = 'block';
+}
 
 socket.on('gameStarted', (state) => {
     updateGameState(state);

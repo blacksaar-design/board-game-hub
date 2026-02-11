@@ -79,6 +79,9 @@ class VogelfotografieHost {
             case 'captureAll':
                 this.handleCaptureAll(data.insectIds, senderId, callback);
                 break;
+            case 'addBot':
+                this.addBot(callback);
+                break;
             case 'getHand':
                 const player = this.players.find(p => p.playerId === senderId);
                 callback(player ? player.hand : { insects: [], birds: [] });
@@ -295,6 +298,36 @@ class VogelfotografieHost {
         }
     }
 
+    addBot(callback) {
+        if (this.players.length >= 4) {
+            return callback({ success: false, error: 'Raum ist voll' });
+        }
+
+        const botId = `bot_${Date.now()}`;
+        const botName = `Robo-Knipser ${this.players.length + 1}`;
+
+        const botPlayer = {
+            playerId: botId,
+            playerName: botName,
+            playerOrder: this.players.length,
+            score: 0,
+            hand: { insects: [], birds: [] },
+            isBot: true
+        };
+
+        this.players.push(botPlayer);
+        console.log('[Host] Bot added:', botName, botId);
+
+        this.bridge.broadcast('playerListUpdate', this.players.map(p => ({
+            playerId: p.playerId,
+            playerName: p.playerName,
+            playerOrder: p.playerOrder,
+            isBot: p.isBot
+        })));
+
+        callback({ success: true, playerId: botId });
+    }
+
     nextTurn() {
         this.gameState.currentPlayerIndex = (this.gameState.currentPlayerIndex + 1) % this.players.length;
         this.gameState.currentDistance = 0;
@@ -302,6 +335,97 @@ class VogelfotografieHost {
 
         if (this.gameState.birdDeck.length === 0 || this.gameState.insectDeck.length === 0) {
             this.endGame();
+            return;
+        }
+
+        this.updateClients();
+
+        const currentPlayer = this.players[this.gameState.currentPlayerIndex];
+
+        // Broadcast new turn event
+        // Note: Client usually updates based on gameStateUpdate, but we might need explicit turn event for animations
+        // In current code, `updateClients` sends `gameStateUpdate` which includes `currentPlayerIndex`.
+        // Let's check if there's a specific 'newTurn' event used elsewhere? 
+        // Based on analysis, `updateClients` calling `broadcast('gameStateUpdate')` triggers UI updates.
+        // However, I previously proposed `broadcast('newTurn')`. Let's stick to what exists if possible, 
+        // or add it if needed. The original `nextTurn` just updated state.
+
+        // Trigger Bot Turn if applicable
+        if (currentPlayer.isBot) {
+            setTimeout(() => this.playBotTurn(currentPlayer.playerId), 1500);
+        }
+    }
+
+    playBotTurn(botId) {
+        const bot = this.players.find(p => p.playerId === botId);
+        if (!bot) return;
+
+        console.log(`[Host] Bot ${bot.playerName} is thinking...`);
+
+        // 1. Check for "Capture All" opportunity
+        const insectCounts = {};
+        bot.hand.insects.forEach(insect => {
+            insectCounts[insect.type] = (insectCounts[insect.type] || 0) + 1;
+        });
+
+        let threeOfAKindType = null;
+        for (const type in insectCounts) {
+            if (insectCounts[type] >= 3) {
+                threeOfAKindType = type;
+                break;
+            }
+        }
+
+        if (threeOfAKindType && this.gameState.visibleBirds.length > 0) {
+            const insectsToUse = bot.hand.insects.filter(i => i.type === threeOfAKindType).slice(0, 3).map(i => i.id);
+            console.log(`[Host] Bot ${bot.playerName} tries Capture All!`);
+            this.handleCaptureAll(insectsToUse, botId, (res) => {
+                if (!res.success) {
+                    this._performNormalBotAction(bot, botId);
+                }
+            });
+            return;
+        }
+
+        this._performNormalBotAction(bot, botId);
+    }
+
+    _performNormalBotAction(bot, botId) {
+        const bird = this.gameState.visibleBirds[0];
+
+        if (!bird) {
+            console.log(`[Host] Bot ${bot.playerName} attracts birds.`);
+            // Mock random insect discard if available
+            const insectToDiscard = bot.hand.insects.length > 0 ? [bot.hand.insects[0].id] : [];
+            this.handleAttract(null, insectToDiscard, botId, () => { });
+            return;
+        }
+
+        const distance = this.gameState.currentDistance;
+        const roll = Math.random();
+
+        // Simple Decision Logic
+        let takePhoto = false;
+        if (distance === 2) takePhoto = true;
+        else if (distance === 1 && roll > 0.3) takePhoto = true;
+        else if (distance === 0 && roll > 0.7) takePhoto = true;
+
+        if (takePhoto) {
+            console.log(`[Host] Bot ${bot.playerName} takes a photo!`);
+            this.handleStartPhotoRoll(bird.id, botId, (rollResult) => {
+                if (rollResult.success) {
+                    const diceValue = rollResult.diceValue;
+                    const isSuccess = this._checkPhotoSuccess(diceValue, bird, distance);
+
+                    // Bot always "confirms" to advance state, whether successful or not
+                    setTimeout(() => {
+                        this.handleResolvePhoto(botId, (res) => { });
+                    }, 1500);
+                }
+            });
+        } else {
+            console.log(`[Host] Bot ${bot.playerName} sneaks.`);
+            this.handleSneak(bird.id, false, null, botId, (res) => { });
         }
     }
 
@@ -349,6 +473,25 @@ class VogelfotografieHost {
 
     _isTurn(id) {
         return this.players[this.gameState.currentPlayerIndex].playerId === id;
+    }
+
+    _checkPhotoSuccess(diceValue, bird, distance) {
+        if (!bird) return false;
+
+        // Find requirement for current distance
+        let req;
+        if (distance === 0) req = bird.distance_far_dice;
+        if (distance === 1) req = bird.distance_mid_dice;
+        if (distance === 2) req = bird.distance_near_dice;
+
+        if (!req) return false;
+
+        if (req.includes('-')) {
+            const [min, max] = req.split('-').map(Number);
+            return diceValue >= min && diceValue <= max;
+        } else {
+            return diceValue === parseInt(req);
+        }
     }
 
     _shuffle(array) {
