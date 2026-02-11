@@ -129,19 +129,17 @@ class VogelfotografieHost {
     handleSneak(birdId, useInsect, insectId, senderId, callback) {
         if (!this._isTurn(senderId)) return callback({ success: false, error: 'Nicht dein Zug' });
 
+        const player = this.players.find(p => p.playerId === senderId);
         let result;
         if (useInsect) {
             // Success guaranteed
             result = 'blank';
-            const player = this.players.find(p => p.playerId === senderId);
             player.hand.insects = player.hand.insects.filter(i => i.id !== insectId);
         } else {
             // Roll sneak dice (4/6 blank, 2/6 bird)
             const roll = Math.floor(Math.random() * 6);
             result = roll < 4 ? 'blank' : 'bird';
         }
-
-        const player = this.players.find(p => p.playerId === senderId);
 
         if (result === 'blank') {
             this.gameState.currentDistance = Math.min(2, this.gameState.currentDistance + 1);
@@ -156,7 +154,6 @@ class VogelfotografieHost {
             this._replaceBird(birdId);
 
             // Draw compensatory insect
-            const player = this.players.find(p => p.playerId === senderId);
             if (this.gameState.insectDeck.length > 0) {
                 player.hand.insects.push(this.gameState.insectDeck.shift());
             }
@@ -297,6 +294,8 @@ class VogelfotografieHost {
 
         const player = this.players.find(p => p.playerId === senderId);
         const bird = this.gameState.visibleBirds.find(b => b.id === birdId);
+
+        if (!bird) return callback({ success: false, error: 'Vogel nicht gefunden' });
 
         // Logic check: 2 matching insects of correct type
         const usedInsects = player.hand.insects.filter(i => insectIds.includes(i.id));
@@ -657,9 +656,21 @@ class VogelfotografieHost {
     }
 
     _botAttract(bot, botId) {
-        console.log(`[Host] Bot ${bot.playerName} attracts birds.`);
-        const insectToDiscard = bot.hand.insects.length > 0 ? [bot.hand.insects[0].id] : [];
-        this.handleAttract(null, insectToDiscard, botId, () => { });
+        // Find any bird the bot can attract (has 2 matching insects)
+        for (const bird of this.gameState.visibleBirds) {
+            const matchingInsects = bot.hand.insects.filter(i => i.card_type === bird.insect_type);
+            if (matchingInsects.length >= 2) {
+                const insectIds = [matchingInsects[0].id, matchingInsects[1].id];
+                console.log(`[Host] Bot ${bot.playerName} attracts ${bird.name}.`);
+                this.handleAttract(bird.id, insectIds, botId, () => { });
+                return;
+            }
+        }
+
+        // If it can't attract anything, just skip/next turn (or maybe it shouldn't be here)
+        console.log(`[Host] Bot ${bot.playerName} wanted to attract but cannot afford anything.`);
+        this.nextTurn();
+        this.updateClients();
     }
 
     _botSneak(bot, botId, bird) {
