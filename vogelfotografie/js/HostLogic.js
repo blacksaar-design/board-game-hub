@@ -425,7 +425,12 @@ class VogelfotografieHost {
             });
         } else {
             console.log(`[Host] Bot ${bot.playerName} sneaks.`);
-            this.handleSneak(bird.id, false, null, botId, (res) => { });
+            this.handleSneak(bird.id, false, null, botId, (res) => {
+                if (res.success && res.result === 'success') {
+                    // Bot continues turn after successful sneak
+                    setTimeout(() => this.playBotTurn(botId), 1500);
+                }
+            });
         }
     }
 
@@ -475,24 +480,7 @@ class VogelfotografieHost {
         return this.players[this.gameState.currentPlayerIndex].playerId === id;
     }
 
-    _checkPhotoSuccess(diceValue, bird, distance) {
-        if (!bird) return false;
 
-        // Find requirement for current distance
-        let req;
-        if (distance === 0) req = bird.distance_far_dice;
-        if (distance === 1) req = bird.distance_mid_dice;
-        if (distance === 2) req = bird.distance_near_dice;
-
-        if (!req) return false;
-
-        if (req.includes('-')) {
-            const [min, max] = req.split('-').map(Number);
-            return diceValue >= min && diceValue <= max;
-        } else {
-            return diceValue === parseInt(req);
-        }
-    }
 
     _shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
