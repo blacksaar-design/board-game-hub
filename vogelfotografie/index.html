@@ -71,99 +71,109 @@
 
     <!-- Game Screen -->
     <div id="gameScreen" class="screen">
-        <div class="game-container">
-            <div class="game-header">
-                <div class="room-code-small">Raum: <span id="gameRoomCode"></span></div>
-                <div class="deck-info">
-                    <div class="deck-counter">
-                        <span class="deck-icon">🐦</span>
-                        <span id="birdDeckCount">0</span>
+        <div class="game-layout">
+            <div class="game-container">
+                <div class="game-header">
+                    <div class="room-code-small">Raum: <span id="gameRoomCode"></span></div>
+                    <div class="deck-info">
+                        <div class="deck-counter">
+                            <span class="deck-icon">🐦</span>
+                            <span id="birdDeckCount">0</span>
+                        </div>
+                        <div class="deck-counter">
+                            <span class="deck-icon">🦗</span>
+                            <span id="insectDeckCount">0</span>
+                        </div>
                     </div>
-                    <div class="deck-counter">
-                        <span class="deck-icon">🦗</span>
-                        <span id="insectDeckCount">0</span>
+                </div>
+
+                <div class="players-panel">
+                    <div id="playersInfo" class="players-info"></div>
+                </div>
+
+                <div class="game-board">
+                    <div class="turn-indicator" id="turnIndicator">
+                        <span id="currentPlayerName">Spieler 1</span> ist an der Reihe
+                    </div>
+
+                    <div class="birds-area">
+                        <h3 class="area-title">Vögel in der Nähe</h3>
+                        <div id="visibleBirds" class="bird-cards-container"></div>
+                    </div>
+
+                    <div class="action-area">
+                        <div class="selected-bird-info" id="selectedBirdInfo">
+                            <p>Wähle einen Vogel zum Fotografieren aus</p>
+                        </div>
+
+                        <div class="distance-tracker" id="distanceTracker">
+                            <div class="distance-step" data-distance="0">
+                                <div class="distance-icon">🔭</div>
+                                <div class="distance-label">Fern</div>
+                            </div>
+                            <div class="distance-step" data-distance="1">
+                                <div class="distance-icon">👀</div>
+                                <div class="distance-label">Mittel</div>
+                            </div>
+                            <div class="distance-step" data-distance="2">
+                                <div class="distance-icon">📸</div>
+                                <div class="distance-label">Nah</div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button id="sneakBtn" class="btn btn-action" disabled>
+                                <span class="btn-icon">🚶</span>
+                                Schleich an
+                            </button>
+                            <button id="photoBtn" class="btn btn-action" disabled>
+                                <span class="btn-icon">📷</span>
+                                Foto machen
+                            </button>
+                            <button id="confirmBtn" class="btn btn-primary" style="display: none;">
+                                <span class="btn-icon">✅</span>
+                                Foto bestätigen
+                            </button>
+                            <button id="applyBonusBtn" class="btn btn-action" style="display: none;">
+                                <span class="btn-icon">✨</span>
+                                Bonus anwenden
+                            </button>
+                            <button id="captureAllBtn" class="btn btn-primary" style="display: none;">
+                                <span class="btn-icon">📸✨</span>
+                                Alle fotografieren
+                            </button>
+                            <button id="attractBtn" class="btn btn-action" disabled>
+                                <span class="btn-icon">🦗</span>
+                                Vogel anlocken
+                            </button>
+                        </div>
+
+                        <div class="dice-area" id="diceArea">
+                            <div class="dice" id="dice">?</div>
+                        </div>
+                    </div>
+
+                    <div class="player-hand">
+                        <h3 class="area-title">Deine Insektenkarten</h3>
+                        <div id="insectHand" class="insect-cards-container"></div>
+                        <div class="hand-hint">Klicke Karten an, um Boni beim Fotografieren zu nutzen</div>
+                    </div>
+
+                    <div class="player-photos">
+                        <div class="photos-header" id="togglePhotos">
+                            <h3 class="area-title">Deine Fotos <span id="playerScore" class="score-badge">0 Pkt</span>
+                            </h3>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div id="capturedBirds" class="captured-birds-container collapsed"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="players-panel">
-                <div id="playersInfo" class="players-info"></div>
-            </div>
-
-            <div class="game-board">
-                <div class="turn-indicator" id="turnIndicator">
-                    <span id="currentPlayerName">Spieler 1</span> ist an der Reihe
-                </div>
-
-                <div class="birds-area">
-                    <h3 class="area-title">Vögel in der Nähe</h3>
-                    <div id="visibleBirds" class="bird-cards-container"></div>
-                </div>
-
-                <div class="action-area">
-                    <div class="selected-bird-info" id="selectedBirdInfo">
-                        <p>Wähle einen Vogel zum Fotografieren aus</p>
-                    </div>
-
-                    <div class="distance-tracker" id="distanceTracker">
-                        <div class="distance-step" data-distance="0">
-                            <div class="distance-icon">🔭</div>
-                            <div class="distance-label">Fern</div>
-                        </div>
-                        <div class="distance-step" data-distance="1">
-                            <div class="distance-icon">👀</div>
-                            <div class="distance-label">Mittel</div>
-                        </div>
-                        <div class="distance-step" data-distance="2">
-                            <div class="distance-icon">📸</div>
-                            <div class="distance-label">Nah</div>
-                        </div>
-                    </div>
-
-                    <div class="action-buttons">
-                        <button id="sneakBtn" class="btn btn-action" disabled>
-                            <span class="btn-icon">🚶</span>
-                            Schleich an
-                        </button>
-                        <button id="photoBtn" class="btn btn-action" disabled>
-                            <span class="btn-icon">📷</span>
-                            Foto machen
-                        </button>
-                        <button id="confirmBtn" class="btn btn-primary" style="display: none;">
-                            <span class="btn-icon">✅</span>
-                            Foto bestätigen
-                        </button>
-                        <button id="applyBonusBtn" class="btn btn-action" style="display: none;">
-                            <span class="btn-icon">✨</span>
-                            Bonus anwenden
-                        </button>
-                        <button id="captureAllBtn" class="btn btn-primary" style="display: none;">
-                            <span class="btn-icon">📸✨</span>
-                            Alle fotografieren
-                        </button>
-                        <button id="attractBtn" class="btn btn-action" disabled>
-                            <span class="btn-icon">🦗</span>
-                            Vogel anlocken
-                        </button>
-                    </div>
-
-                    <div class="dice-area" id="diceArea">
-                        <div class="dice" id="dice">?</div>
-                    </div>
-                </div>
-
-                <div class="player-hand">
-                    <h3 class="area-title">Deine Insektenkarten</h3>
-                    <div id="insectHand" class="insect-cards-container"></div>
-                    <div class="hand-hint">Klicke Karten an, um Boni beim Fotografieren zu nutzen</div>
-                </div>
-
-                <div class="player-photos">
-                    <div class="photos-header" id="togglePhotos">
-                        <h3 class="area-title">Deine Fotos <span id="playerScore" class="score-badge">0 Pkt</span></h3>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-                    <div id="capturedBirds" class="captured-birds-container collapsed"></div>
+            <div class="game-log-sidebar">
+                <h3>Spielverlauf</h3>
+                <div id="gameLog" class="game-log-list">
+                    <div class="log-entry system-msg">Willkommen!</div>
                 </div>
             </div>
         </div>
@@ -189,10 +199,10 @@
         </div>
     </div>
 
-    <script src="js/HostLogic.js?v=10"></script>
-    <script src="js/SocketBridge.js?v=10"></script>
-    <script src="js/components.js?v=10"></script>
-    <script src="js/game.js?v=10"></script>
+    <script src="js/HostLogic.js?v=11"></script>
+    <script src="js/SocketBridge.js?v=11"></script>
+    <script src="js/components.js?v=11"></script>
+    <script src="js/game.js?v=11"></script>
 </body>
 
 </html>

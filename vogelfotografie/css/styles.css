@@ -1390,4 +1390,122 @@ input[type="text"]:focus {
         height: 50px;
         font-size: 1.6rem;
     }
+
+    /* Game Log Mobile Specifics */
+    .game-layout {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .game-log-sidebar {
+        width: 100%;
+        height: 250px;
+        border-left: none;
+        border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+        margin-top: var(--spacing-lg);
+    }
+}
+
+/* --- Game Log Styles --- */
+.game-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: var(--spacing-lg);
+    align-items: start;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.game-log-sidebar {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+    position: sticky;
+    top: 20px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.game-log-sidebar h3 {
+    margin: 0;
+    padding: var(--spacing-md);
+    background: rgba(0, 0, 0, 0.2);
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.game-log-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) transparent;
+}
+
+.game-log-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.game-log-list::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color);
+    border-radius: 10px;
+}
+
+.log-entry {
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    line-height: 1.4;
+    border-left: 3px solid transparent;
+    animation: slideInLog 0.3s ease;
+}
+
+@keyframes slideInLog {
+    from {
+        opacity: 0;
+        transform: translateX(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.log-entry.system-msg {
+    color: var(--text-tertiary);
+    font-style: italic;
+    border-left-color: var(--text-tertiary);
+}
+
+.log-entry.action {
+    border-left-color: var(--primary-color);
+}
+
+.log-entry.success {
+    border-left-color: var(--success-color);
+    background: rgba(63, 185, 80, 0.05);
+}
+
+.log-entry.fail {
+    border-left-color: var(--danger-color);
+    background: rgba(248, 81, 73, 0.05);
+}
+
+.log-entry.turn {
+    border-left-color: var(--warning-color);
+    font-weight: bold;
+    background: rgba(210, 153, 34, 0.1);
+}
+
+.log-entry.bot {
+    border-left-color: var(--accent-color);
 }

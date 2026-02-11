@@ -112,7 +112,18 @@ class VogelfotografieHost {
         this.gameState.currentPlayerIndex = 0;
 
         this.bridge.broadcast('gameStarted', this._getFullState());
+        this.addToLog('🏁 Das Spiel hat begonnen!', 'turn');
         callback({ success: true });
+    }
+
+    addToLog(message, type = 'system-msg') {
+        const logEntry = {
+            id: Date.now() + Math.random(),
+            message,
+            type,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        this.bridge.broadcast('logUpdate', logEntry);
     }
 
     handleSneak(birdId, useInsect, insectId, senderId, callback) {
@@ -130,13 +141,17 @@ class VogelfotografieHost {
             result = roll < 4 ? 'blank' : 'bird';
         }
 
+        const player = this.players.find(p => p.playerId === senderId);
+
         if (result === 'blank') {
             this.gameState.currentDistance = Math.min(2, this.gameState.currentDistance + 1);
             this.gameState.currentBirdId = birdId;
+            this.addToLog(`👟 ${player.playerName} schleicht sich an... Erfolg!`, 'success');
             this.bridge.broadcast('diceRolled', { playerId: senderId, diceValue: result, skipAnimation: useInsect });
             callback({ success: true, result: 'success', newDistance: this.gameState.currentDistance, diceValue: result });
         } else {
             // Bird flies away!
+            this.addToLog(`🌬️ ${player.playerName} schleicht sich an... Vogel ist weggeflogen!`, 'fail');
             this.gameState.birdDiscard.push(birdId);
             this._replaceBird(birdId);
 
@@ -191,6 +206,7 @@ class VogelfotografieHost {
         player.hand.insects = player.hand.insects.filter(i => i.id !== insectCardId);
 
         this.bridge.broadcast('diceUpdated', { playerId: senderId, newDice: newVal });
+        this.addToLog(`✨ ${player.playerName} nutzt ${insect.name} (${insect.bonus_text})`, 'action');
         callback({ success: true, newDice: newVal });
         this.updateClients();
     }
@@ -208,10 +224,12 @@ class VogelfotografieHost {
             player.hand.birds.push(bird);
             player.score += bird.prestige_points;
             this._replaceBird(bird.id);
+            this.addToLog(`📸 ${player.playerName} fotografiert den ${bird.name} (${bird.prestige_points} Pkt)!`, 'success');
             callback({ success: true, result: 'captured' });
         } else {
             this.gameState.birdDiscard.push(bird.id);
             this._replaceBird(bird.id);
+            this.addToLog(`🌫️ ${player.playerName} verpasst den ${bird.name} (Würfel: ${action.diceValue})...`, 'fail');
 
             // Draw compensatory insect
             if (this.gameState.insectDeck.length > 0) {
@@ -263,6 +281,8 @@ class VogelfotografieHost {
             this._replaceBird(bird.id);
         });
 
+        this.addToLog(`📸✨ ${player.playerName} nutzt Insekten-Power und fotografiert ${capturedBirds.length} Vögel auf einmal!`, 'success');
+
         this.gameState.pendingAction = null;
         this.gameState.currentDistance = 0;
         this.gameState.currentBirdId = null;
@@ -287,6 +307,8 @@ class VogelfotografieHost {
             player.hand.birds.push(bird);
             player.score += bird.prestige_points;
             this._replaceBird(bird.id);
+
+            this.addToLog(`🦗 ${player.playerName} lockt den ${bird.name} erfolgreich an!`, 'success');
 
             this.gameState.currentDistance = 0;
             this.gameState.currentBirdId = null;
@@ -698,6 +720,7 @@ class VogelfotografieHost {
 
     endGame() {
         this.gameState.status = 'finished';
+        this.addToLog(`🏆 Das Spiel ist beendet!`, 'turn');
         const finalScores = this.players.map(p => ({
             playerId: p.playerId,
             playerName: p.playerName,

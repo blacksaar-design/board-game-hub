@@ -65,7 +65,10 @@ const elements = {
     togglePhotos: document.getElementById('togglePhotos'),
 
     // Bot
-    addBotBtn: document.getElementById('addBotBtn')
+    addBotBtn: document.getElementById('addBotBtn'),
+
+    // Game Log
+    gameLog: document.getElementById('gameLog')
 };
 
 // Internal client state
@@ -342,6 +345,17 @@ socket.on('diceUpdated', (data) => {
     if (data.playerId !== gameState.playerId) {
         elements.dice.textContent = data.newDice;
     }
+});
+
+socket.on('logUpdate', (entry) => {
+    if (!elements.gameLog) return;
+
+    const div = document.createElement('div');
+    div.className = `log-entry ${entry.type}`;
+    div.innerHTML = `<small style="opacity: 0.5; font-size: 0.7rem;">[${entry.timestamp}]</small> ${entry.message}`;
+
+    elements.gameLog.appendChild(div);
+    elements.gameLog.scrollTop = elements.gameLog.scrollHeight;
 });
 
 socket.on('gameEnded', (data) => {
