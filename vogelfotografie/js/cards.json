@@ -114,7 +114,7 @@
       "insect_type": "ant",
       "prestige_points": 3,
       "distance_far_dice": "1",
-      "distance_mid_dice": "2",
+      "distance_mid_dice": null,
       "distance_near_dice": "3"
     },
     {
