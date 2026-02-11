@@ -253,31 +253,59 @@ socket.on('playerListUpdate', (players) => {
     if (isHost) {
         ensureBotButton();
     } else {
-        const btn = document.getElementById('addBotBtn');
-        if (btn) btn.style.display = 'none';
+        const container = document.getElementById('botControls');
+        if (container) container.style.display = 'none';
+
+        // Legacy cleanup
+        const oldBtn = document.getElementById('addBotBtn');
+        if (oldBtn && !container) oldBtn.style.display = 'none';
     }
 });
 
 function ensureBotButton() {
-    let btn = document.getElementById('addBotBtn');
+    let container = document.getElementById('botControls');
 
-    if (!btn) {
-        // If button is missing (e.g. wiped by screen update), recreate it
-        btn = document.createElement('button');
+    if (!container) {
+        // Create container
+        container = document.createElement('div');
+        container.id = 'botControls';
+        container.style.display = 'flex';
+        container.style.gap = '5px';
+        container.style.marginBottom = '10px';
+
+        // Difficulty Select
+        const select = document.createElement('select');
+        select.id = 'botDifficultyGroup';
+        select.className = 'btn btn-secondary'; // Recycle style
+        select.style.flex = '1';
+        select.style.textAlign = 'center';
+        select.style.padding = '0 5px';
+        select.innerHTML = `
+            <option value="easy">🤖 Leicht</option>
+            <option value="medium">🧠 Mittel</option>
+        `;
+
+        // Add Button
+        const btn = document.createElement('button');
         btn.id = 'addBotBtn';
         btn.className = 'btn btn-secondary';
-        btn.style.marginBottom = '10px';
-        btn.style.width = '100%';
-        btn.innerHTML = '🤖 Bot hinzufügen';
+        btn.style.flex = '0 0 auto';
+        btn.innerHTML = '+';
+
+        container.appendChild(select);
+        container.appendChild(btn);
 
         // Find insertion point
         const startGameBtn = document.getElementById('startGameBtn');
-        if (startGameBtn && startGameBtn.parentNode) {
-            startGameBtn.parentNode.insertBefore(btn, startGameBtn);
+        const playersList = document.querySelector('.players-waiting');
 
-            // Re-attach listener
+        if (playersList) {
+            playersList.appendChild(container);
+
+            // Listener
             btn.addEventListener('click', () => {
-                socket.emit('addBot', {}, (response) => {
+                const difficulty = select.value;
+                socket.emit('addBot', { difficulty }, (response) => {
                     if (!response.success) {
                         UI.showModal('❌', 'Fehler', response.error);
                     }
@@ -286,8 +314,7 @@ function ensureBotButton() {
         }
     }
 
-    // Force visibility
-    if (btn) btn.style.display = 'block';
+    if (container) container.style.display = 'flex';
 }
 
 socket.on('gameStarted', (state) => {

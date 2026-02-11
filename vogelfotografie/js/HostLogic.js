@@ -80,7 +80,7 @@ class VogelfotografieHost {
                 this.handleCaptureAll(data.insectIds, senderId, callback);
                 break;
             case 'addBot':
-                this.addBot(callback);
+                this.addBot(data.difficulty, callback);
                 break;
             case 'getHand':
                 const player = this.players.find(p => p.playerId === senderId);
@@ -298,13 +298,14 @@ class VogelfotografieHost {
         }
     }
 
-    addBot(callback) {
+    addBot(difficulty = 'easy', callback) {
         if (this.players.length >= 4) {
             return callback({ success: false, error: 'Raum ist voll' });
         }
 
         const botId = `bot_${Date.now()}`;
-        const botName = `Robo-Knipser ${this.players.length + 1}`;
+        const diffLabel = difficulty === 'medium' ? 'Mittel' : 'Leicht';
+        const botName = `Robo-Knipser ${this.players.length + 1} (${diffLabel})`;
 
         const botPlayer = {
             playerId: botId,
@@ -312,11 +313,12 @@ class VogelfotografieHost {
             playerOrder: this.players.length,
             score: 0,
             hand: { insects: [], birds: [] },
-            isBot: true
+            isBot: true,
+            difficulty: difficulty
         };
 
         this.players.push(botPlayer);
-        console.log('[Host] Bot added:', botName, botId);
+        console.log(`[Host] Bot added (${difficulty}):`, botName, botId);
 
         this.bridge.broadcast('playerListUpdate', this.players.map(p => ({
             playerId: p.playerId,
@@ -360,9 +362,9 @@ class VogelfotografieHost {
         const bot = this.players.find(p => p.playerId === botId);
         if (!bot) return;
 
-        console.log(`[Host] Bot ${bot.playerName} is thinking...`);
+        console.log(`[Host] Bot ${bot.playerName} (Diff: ${bot.difficulty}) is thinking...`);
 
-        // 1. Check for "Capture All" opportunity
+        // 1. Check for "Capture All" opportunity (All difficulties do this because it's cool)
         const insectCounts = {};
         bot.hand.insects.forEach(insect => {
             insectCounts[insect.type] = (insectCounts[insect.type] || 0) + 1;
@@ -381,57 +383,158 @@ class VogelfotografieHost {
             console.log(`[Host] Bot ${bot.playerName} tries Capture All!`);
             this.handleCaptureAll(insectsToUse, botId, (res) => {
                 if (!res.success) {
-                    this._performNormalBotAction(bot, botId);
+                    this._continueBotTurn(bot, botId);
                 }
             });
             return;
         }
 
-        this._performNormalBotAction(bot, botId);
+        this._continueBotTurn(bot, botId);
     }
 
-    _performNormalBotAction(bot, botId) {
+    _continueBotTurn(bot, botId) {
+        if (bot.difficulty === 'medium') {
+            this._playBotTurnMedium(bot, botId);
+        } else {
+            this._playBotTurnEasy(bot, botId);
+        }
+    }
+
+    _playBotTurnEasy(bot, botId) {
         const bird = this.gameState.visibleBirds[0];
 
         if (!bird) {
-            console.log(`[Host] Bot ${bot.playerName} attracts birds.`);
-            // Mock random insect discard if available
-            const insectToDiscard = bot.hand.insects.length > 0 ? [bot.hand.insects[0].id] : [];
-            this.handleAttract(null, insectToDiscard, botId, () => { });
+            this._botAttract(bot, botId);
             return;
         }
 
         const distance = this.gameState.currentDistance;
         const roll = Math.random();
 
-        // Simple Decision Logic
+        // Simple Decision Logic (Random/Aggressive)
         let takePhoto = false;
         if (distance === 2) takePhoto = true;
         else if (distance === 1 && roll > 0.3) takePhoto = true;
         else if (distance === 0 && roll > 0.7) takePhoto = true;
 
         if (takePhoto) {
-            console.log(`[Host] Bot ${bot.playerName} takes a photo!`);
-            this.handleStartPhotoRoll(bird.id, botId, (rollResult) => {
-                if (rollResult.success) {
-                    const diceValue = rollResult.diceValue;
-                    const isSuccess = this._checkPhotoSuccess(diceValue, bird, distance);
-
-                    // Bot always "confirms" to advance state, whether successful or not
-                    setTimeout(() => {
-                        this.handleResolvePhoto(botId, (res) => { });
-                    }, 1500);
-                }
-            });
+            this._botTakePhoto(bot, botId, bird, distance, false); // False = No items
         } else {
-            console.log(`[Host] Bot ${bot.playerName} sneaks.`);
-            this.handleSneak(bird.id, false, null, botId, (res) => {
-                if (res.success && res.result === 'success') {
-                    // Bot continues turn after successful sneak
-                    setTimeout(() => this.playBotTurn(botId), 1500);
-                }
-            });
+            this._botSneak(bot, botId, bird);
         }
+    }
+
+    _playBotTurnMedium(bot, botId) {
+        // Medium Bot Strategy:
+        // 1. Target Selection: Pick the easiest bird or most valuable if easy.
+        //    (For simplicity, currently we only engage the active bird if one is selected, 
+        //     but in this game you target *a* bird. The game state has 'currentBirdId' only during sneak/photo sequence.
+        //     Actually, 'visibleBirds' are all targets. 
+        //     But wait, 'Sneak' targets a specific bird? 'handleSneak' takes birdId.
+        //     So we can choose ANY bird to start on.
+        //     Easy bot always took [0]. Medium should check all.)
+
+        // Find best target
+        let bestBird = null;
+        let bestScore = -1;
+
+        // Simple heuristic: Points / Difficulty
+        // Difficulty estimate: distance_near_dice count (simplified)
+        // Actually, just prioritize points for now.
+        // Or stick to bird[0] to keep it snappy, but use items.
+        // Let's iterate and find the first one that matches our hand? No, hand is for bonuses.
+
+        // Strategy: Stick to bird[0] for consistency unless we can't catch it?
+        // Let's just pick the bird with most points.
+        this.gameState.visibleBirds.forEach(bird => {
+            if (!bestBird || bird.prestige_points > bestBird.prestige_points) {
+                bestBird = bird;
+            }
+        });
+
+        if (!bestBird) {
+            this._botAttract(bot, botId);
+            return;
+        }
+
+        const distance = this.gameState.currentDistance;
+
+        // Decision: Photo vs Sneak
+        // If we are close (2), Photo.
+        // If we are mid (1), Photo.
+        // If we are far (0), Sneak (unless we have a perfect dice match guarantee? No, we don't know roll yet).
+
+        let takePhoto = false;
+        if (distance >= 1) takePhoto = true; // More aggressive on Photo if steps taken
+        else takePhoto = false; // Always sneak at start (safest)
+
+        if (takePhoto) {
+            this._botTakePhoto(bot, botId, bestBird, distance, true); // True = Use Items
+        } else {
+            this._botSneak(bot, botId, bestBird);
+        }
+    }
+
+    _botAttract(bot, botId) {
+        console.log(`[Host] Bot ${bot.playerName} attracts birds.`);
+        const insectToDiscard = bot.hand.insects.length > 0 ? [bot.hand.insects[0].id] : [];
+        this.handleAttract(null, insectToDiscard, botId, () => { });
+    }
+
+    _botSneak(bot, botId, bird) {
+        console.log(`[Host] Bot ${bot.playerName} sneaks on ${bird.name}.`);
+        this.handleSneak(bird.id, false, null, botId, (res) => {
+            if (res.success && res.result === 'success') {
+                setTimeout(() => this.playBotTurn(botId), 1500);
+            }
+        });
+    }
+
+    _botTakePhoto(bot, botId, bird, distance, useItems) {
+        console.log(`[Host] Bot ${bot.playerName} takes a photo of ${bird.name}!`);
+        this.handleStartPhotoRoll(bird.id, botId, (rollResult) => {
+            if (rollResult.success) {
+                const diceValue = rollResult.diceValue;
+                let isSuccess = this._checkPhotoSuccess(diceValue, bird, distance);
+
+                if (!isSuccess && useItems) {
+                    // Try to fix it with insects
+                    const insect = this._findHelpfulInsect(bot, diceValue, bird, distance);
+                    if (insect) {
+                        console.log(`[Host] Bot ${bot.playerName} uses ${insect.type} to fix roll!`);
+                        this.handleApplyBonus(insect.id, botId, (res) => {
+                            // Recalculate success (dice updated in state)
+                            // wait for callback? handleApplyBonus calls callback with newDice.
+                            // Then we proceed to resolve.
+                            setTimeout(() => {
+                                this.handleResolvePhoto(botId, (res) => { });
+                            }, 1500);
+                        });
+                        return;
+                    }
+                }
+
+                setTimeout(() => {
+                    this.handleResolvePhoto(botId, (res) => { });
+                }, 1500);
+            }
+        });
+    }
+
+    _findHelpfulInsect(bot, currentDice, bird, distance) {
+        // Try each insect
+        for (const insect of bot.hand.insects) {
+            let modDice = currentDice;
+            if (insect.bonus_action === 'increase') modDice = Math.min(6, currentDice + 1);
+            if (insect.bonus_action === 'decrease') modDice = Math.max(1, currentDice - 1);
+            if (insect.bonus_action === 'flip') modDice = 7 - currentDice;
+            // Skip reroll for simplicity (too random)
+
+            if (this._checkPhotoSuccess(modDice, bird, distance)) {
+                return insect;
+            }
+        }
+        return null;
     }
 
     endGame() {
