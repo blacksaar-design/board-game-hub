@@ -393,13 +393,47 @@ class VogelfotografieHost {
     }
 
     _continueBotTurn(bot, botId) {
-        if (bot.difficulty === 'hard') {
+        if (bot.difficulty === 'legendary') {
+            this._playBotTurnLegendary(bot, botId);
+        } else if (bot.difficulty === 'hard') {
             this._playBotTurnHard(bot, botId);
         } else if (bot.difficulty === 'medium') {
             this._playBotTurnMedium(bot, botId);
         } else {
             this._playBotTurnEasy(bot, botId);
         }
+    }
+
+    _playBotTurnLegendary(bot, botId) {
+        // Legendary Strategy: "Master of Attraction"
+        // Priority: Use "Attract" (2 insects) to capture high value birds (4+ points) WITHOUT rolling dice.
+
+        const highValueBirds = this.gameState.visibleBirds.filter(b => b.prestige_points >= 4);
+
+        for (const bird of highValueBirds) {
+            // Do we have 2 insects of the correct type?
+            const matchingInsects = bot.hand.insects.filter(i => i.card_type === bird.insect_type);
+
+            if (matchingInsects.length >= 2) {
+                console.log(`[Host] Bot ${bot.playerName} (Legendary) uses Smart Attract on ${bird.name}!`);
+                const insectIds = matchingInsects.slice(0, 2).map(i => i.id);
+
+                // Use Attract to capture immediately
+                // Note: handleAttract expects "birdId" (to capture) and "insectIds" (payment).
+                // Wait, handleAttract logic in HostLogic.js:
+                // "if (usedInsects.length === 2 && allCorrectType) { ... player.hand.birds.push(bird); ... }"
+                // Yes, it captures the bird.
+
+                this.handleAttract(bird.id, insectIds, botId, (res) => {
+                    // If success using attract, turn is over (it calls nextTurn inside).
+                    // However, handleAttract might fail if something is wrong, but we checked locally.
+                });
+                return;
+            }
+        }
+
+        // Step 2: Fallback to Hard Logic (EV Maximization)
+        this._playBotTurnHard(bot, botId);
     }
 
     _playBotTurnHard(bot, botId) {

@@ -284,6 +284,7 @@ function ensureBotButton() {
             <option value="easy">🤖 Leicht</option>
             <option value="medium">🧠 Mittel</option>
             <option value="hard">🏆 Profi</option>
+            <option value="legendary">🦄 Legendär</option>
         `;
 
         // Add Button
