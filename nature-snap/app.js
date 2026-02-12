@@ -6,6 +6,7 @@ const VERSION = "1.1.0-AI";
 
 const state = {
     model: null,
+    classifier: null,
     stream: null,
     isProcessing: false,
     collection: JSON.parse(localStorage.getItem('nature_collection') || '[]'),
@@ -29,8 +30,12 @@ const countdownStatus = document.getElementById('tracking-status');
  */
 async function initCamera() {
     try {
-        countdownStatus.innerText = "LOADING AI MODEL...";
-        state.model = await cocoSsd.load();
+        countdownStatus.innerText = "LOADING AI MODELS...";
+        // Load detection and classification models in parallel
+        [state.model, state.classifier] = await Promise.all([
+            cocoSsd.load(),
+            mobilenet.load()
+        ]);
         countdownStatus.innerText = "READY FOR SCAN";
 
         const constraints = {
@@ -69,9 +74,23 @@ function captureSnapshot() {
     // Run AI Identification
     setTimeout(async () => {
         const predictions = await state.model.detect(canvas);
-        const result = processPredictions(predictions, canvas.width, canvas.height);
 
-        if (result) {
+        // Find animals first
+        const animalDetections = predictions.filter(p =>
+            state.animalClasses.includes(p.class) && p.score > 0.6
+        );
+
+        if (animalDetections.length > 0) {
+            // Pick most prominent
+            const primary = animalDetections.reduce((prev, curr) =>
+                (prev.bbox[2] * prev.bbox[3] > curr.bbox[2] * curr.bbox[3]) ? prev : curr
+            );
+
+            // Classification stage: Use MobileNet on the original canvas
+            const classifications = await state.classifier.classify(canvas);
+            const speciesName = classifications[0].className;
+
+            const result = processPredictions(animalDetections, primary, speciesName, canvas.width, canvas.height);
             showResult(result, imageData);
         } else {
             countdownStatus.innerText = "NO ANIMAL DETECTED";
@@ -86,28 +105,14 @@ function captureSnapshot() {
 /**
  * Process AI Predictions
  */
-function processPredictions(predictions, width, height) {
-    console.log("AI Predictions:", predictions);
-
-    // Filter for animals with at least 60% confidence
-    const animalDetections = predictions.filter(p =>
-        state.animalClasses.includes(p.class) && p.score > 0.6
-    );
-
-    if (animalDetections.length === 0) return null;
-
-    // Pick the most "prominent" animal (largest box)
-    const primary = animalDetections.reduce((prev, curr) =>
-        (prev.bbox[2] * prev.bbox[3] > curr.bbox[2] * curr.bbox[3]) ? prev : curr
-    );
-
+function processPredictions(allDetections, primary, speciesName, width, height) {
     const [x, y, w, h] = primary.bbox;
 
-    // 1. Größe (Size) - How much of the screen? (Target: 40% of image area = 100 points)
+    // 1. Größe (Size)
     const areaPercent = (w * h) / (width * height);
     const sizeScore = Math.min(100, Math.floor(areaPercent * 250));
 
-    // 2. Position - How close to center?
+    // 2. Position
     const centerX = x + w / 2;
     const centerY = y + h / 2;
     const distFromCenter = Math.sqrt(
@@ -118,10 +123,9 @@ function processPredictions(predictions, width, height) {
     const posScore = Math.floor(100 * (1 - (distFromCenter / maxDist)));
 
     // 3. Weitere Tiere (Bonus)
-    const bonusScore = Math.min(100, (animalDetections.length - 1) * 50);
+    const bonusScore = Math.min(100, (allDetections.length - 1) * 50);
 
-    // 4. Blickrichtung (Simulated logic based on aspect ratio as proxy for pose)
-    // In real AI this would need a pose model, here we use a small random jitter on a base score
+    // 4. Blickrichtung (Simulated)
     const gazeScore = Math.floor(50 + Math.random() * 50);
 
     const scores = {
@@ -131,13 +135,16 @@ function processPredictions(predictions, width, height) {
         bonus: bonusScore
     };
 
-    const baseScore = 500; // Base discovery score
+    const baseScore = 500;
     const qualityScore = (sizeScore * 10) + (gazeScore * 8) + (posScore * 12) + (bonusScore * 5);
     const totalScore = Math.floor(baseScore + qualityScore);
 
+    // Filter species name - MobileNet names can be comma separated
+    const cleanName = speciesName.split(',')[0].trim();
+
     return {
-        name: primary.class.charAt(0).toUpperCase() + primary.class.slice(1),
-        rarity: areaPercent < 0.1 ? 'Rare Finding' : 'Common',
+        name: cleanName,
+        rarity: areaPercent < 0.1 || allDetections.length > 2 ? 'Super Rare' : 'Common',
         categories: scores,
         score: totalScore,
         id: Date.now()
