@@ -3,9 +3,11 @@
  */
 
 const state = {
+    model: null,
     stream: null,
     isProcessing: false,
     collection: JSON.parse(localStorage.getItem('nature_collection') || '[]'),
+    animalClasses: ['bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe'],
     mockAnimals: [
         { name: 'Red Fox', rarity: 'Rare', baseScore: 850 },
         { name: 'Common Blackbird', rarity: 'Common', baseScore: 120 },
@@ -33,6 +35,10 @@ const countdownStatus = document.getElementById('tracking-status');
  */
 async function initCamera() {
     try {
+        countdownStatus.innerText = "LOADING AI MODEL...";
+        state.model = await cocoSsd.load();
+        countdownStatus.innerText = "READY FOR SCAN";
+
         const constraints = {
             video: {
                 facingMode: 'environment', // Use back camera
@@ -66,33 +72,59 @@ function captureSnapshot() {
 
     const imageData = canvas.toDataURL('image/jpeg');
 
-    // Simulate AI Identification Delay
-    setTimeout(() => {
-        const result = identifyAnimal(imageData);
-        showResult(result, imageData);
+    // Run AI Identification
+    setTimeout(async () => {
+        const predictions = await state.model.detect(canvas);
+        const result = processPredictions(predictions, canvas.width, canvas.height);
+
+        if (result) {
+            showResult(result, imageData);
+        } else {
+            countdownStatus.innerText = "NO ANIMAL DETECTED";
+            setTimeout(() => { countdownStatus.innerText = "READY FOR SCAN"; }, 2000);
+        }
+
         state.isProcessing = false;
         snapBtn.style.opacity = "1";
-        countdownStatus.innerText = "READY FOR SCAN";
-    }, 1500);
+    }, 100);
 }
 
 /**
- * Mock Identification Logic
- * In a real app, this would call a Vision API
+ * Process AI Predictions
  */
-function identifyAnimal(image) {
-    const randomIndex = Math.floor(Math.random() * state.mockAnimals.length);
-    const animal = state.mockAnimals[randomIndex];
+function processPredictions(predictions, width, height) {
+    // Filter for animals
+    const animalDetections = predictions.filter(p => state.animalClasses.includes(p.class));
 
-    // Calculate 4 categories (Normalized 0-100)
-    // Größe: Basierend auf zufälliger Entfernung
-    const sizeScore = Math.floor(Math.random() * 100);
-    // Blickrichtung: Basierend auf zufälliger Pose
-    const gazeScore = Math.floor(Math.random() * 100);
-    // Position: Basierend auf Zentrierung im Bild
-    const posScore = Math.floor(Math.random() * 100);
-    // Weitere Tiere: Seltener Bonus
-    const bonusScore = Math.random() > 0.8 ? Math.floor(Math.random() * 100) : 0;
+    if (animalDetections.length === 0) return null;
+
+    // Pick the most "prominent" animal (largest box)
+    const primary = animalDetections.reduce((prev, curr) =>
+        (prev.bbox[2] * prev.bbox[3] > curr.bbox[2] * curr.bbox[3]) ? prev : curr
+    );
+
+    const [x, y, w, h] = primary.bbox;
+
+    // 1. Größe (Size) - How much of the screen? (Target: 40% of image area = 100 points)
+    const areaPercent = (w * h) / (width * height);
+    const sizeScore = Math.min(100, Math.floor(areaPercent * 250));
+
+    // 2. Position - How close to center?
+    const centerX = x + w / 2;
+    const centerY = y + h / 2;
+    const distFromCenter = Math.sqrt(
+        Math.pow(centerX - width / 2, 2) +
+        Math.pow(centerY - height / 2, 2)
+    );
+    const maxDist = Math.sqrt(Math.pow(width / 2, 2) + Math.pow(height / 2, 2));
+    const posScore = Math.floor(100 * (1 - (distFromCenter / maxDist)));
+
+    // 3. Weitere Tiere (Bonus)
+    const bonusScore = Math.min(100, (animalDetections.length - 1) * 50);
+
+    // 4. Blickrichtung (Simulated logic based on aspect ratio as proxy for pose)
+    // In real AI this would need a pose model, here we use a small random jitter on a base score
+    const gazeScore = Math.floor(50 + Math.random() * 50);
 
     const scores = {
         size: sizeScore,
@@ -101,18 +133,19 @@ function identifyAnimal(image) {
         bonus: bonusScore
     };
 
-    // Calculate total score based on weights
-    // Basis-Rarität zählt 50%, der Rest kommt über die Qualität
+    const baseScore = 500; // Base discovery score
     const qualityScore = (sizeScore * 10) + (gazeScore * 8) + (posScore * 12) + (bonusScore * 5);
-    const totalScore = Math.floor(animal.baseScore + qualityScore);
+    const totalScore = Math.floor(baseScore + qualityScore);
 
     return {
-        ...animal,
+        name: primary.class.charAt(0).toUpperCase() + primary.class.slice(1),
+        rarity: areaPercent < 0.1 ? 'Rare Finding' : 'Common',
         categories: scores,
         score: totalScore,
         id: Date.now()
     };
 }
+
 
 /**
  * Show Result Overlay
