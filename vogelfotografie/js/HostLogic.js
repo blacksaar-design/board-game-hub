@@ -102,13 +102,21 @@ class VogelfotografieHost {
         // Shuffle cards
         this.gameState.birdDeck = this._shuffle([...this.cards.birds]);
 
-        // Solo Mode: only 1 player total (no other humans, no bots)
-        const isSoloMode = this.players.length === 1;
+        // Insect Deck Scaling:
+        // 1 Player: IDs 1-32 (32 cards)
+        // 2 Players: IDs 1-48 (48 cards)
+        // 3-4 Players: Full Set 1-64 (64 cards)
         let baseInsectDeck = [...this.cards.insects];
+        const playerCount = this.players.length;
 
-        if (isSoloMode) {
+        if (playerCount === 1) {
             baseInsectDeck = baseInsectDeck.filter(i => i.id <= 32);
             this.addToLog('ℹ️ Solo-Modus: Insektenstapel auf 32 Karten begrenzt.', 'system-msg');
+        } else if (playerCount === 2) {
+            baseInsectDeck = baseInsectDeck.filter(i => i.id <= 48);
+            this.addToLog('ℹ️ 2-Spieler-Modus: Insektenstapel auf 48 Karten begrenzt.', 'system-msg');
+        } else {
+            this.addToLog(`ℹ️ ${playerCount}-Spieler-Modus: Voller Insektenstapel (64 Karten) aktiv.`, 'system-msg');
         }
 
         this.gameState.insectDeck = this._shuffle(baseInsectDeck);
@@ -226,7 +234,7 @@ class VogelfotografieHost {
         player.hand.insects = player.hand.insects.filter(i => i.id !== insectCardId);
 
         this.bridge.broadcast('diceUpdated', { playerId: senderId, newDice: newVal });
-        this.addToLog(`✨ ${player.playerName} nutzt ${insect.name} (${insect.bonus_text})`, 'action');
+        this.addToLog(`✨ ${player.playerName} nutzt ${insect.card_type} (${insect.bonus_action})`, 'action');
         callback({ success: true, newDice: newVal });
         this.updateClients();
     }
@@ -366,13 +374,15 @@ class VogelfotografieHost {
         this.gameState.currentBirdId = birdId;
         const player = this.players.find(p => p.playerId === senderId);
 
-        // 1-Point Bird Bonus (only on first selection)
-        if (bird.prestige_points === 1) {
+        // 1-Point Bird Bonus (only on first selection and only in Multi-player)
+        if (bird.prestige_points === 1 && this.players.length > 1) {
             if (this.gameState.insectDeck.length > 0) {
                 const extraInsect = this.gameState.insectDeck.shift();
                 player.hand.insects.push(extraInsect);
                 this.addToLog(`🎁 Bonus: Eine extra Insektenkarte für das Ziel ${bird.name}!`, 'action');
             }
+        } else if (bird.prestige_points === 1) {
+            this.addToLog(`🎯 ${player.playerName} hat den ${bird.name} als Ziel gewählt.`, 'action');
         } else {
             this.addToLog(`🎯 ${player.playerName} hat den ${bird.name} als Ziel gewählt.`, 'action');
         }
@@ -513,9 +523,12 @@ class VogelfotografieHost {
                 // "if (usedInsects.length === 2 && allCorrectType) { ... player.hand.birds.push(bird); ... }"
                 // Yes, it captures the bird.
 
-                this.handleAttract(bird.id, insectIds, botId, (res) => {
-                    // If success using attract, turn is over (it calls nextTurn inside).
-                    // However, handleAttract might fail if something is wrong, but we checked locally.
+                this.handleSelectBird(bird.id, botId, (res) => {
+                    if (res.success) {
+                        this.handleAttract(bird.id, insectIds, botId, (res) => {
+                            // If success using attract, turn is over (it calls nextTurn inside).
+                        });
+                    }
                 });
                 return;
             }
@@ -756,32 +769,34 @@ class VogelfotografieHost {
     }
 
     _botTakePhoto(bot, botId, bird, distance, useItems) {
-        console.log(`[Host] Bot ${bot.playerName} takes a photo of ${bird.name}!`);
-        this.handleStartPhotoRoll(bird.id, botId, (rollResult) => {
-            if (rollResult.success) {
-                const diceValue = rollResult.diceValue;
-                let isSuccess = this._checkPhotoSuccess(diceValue, bird, distance);
+        console.log(`[Host] Bot ${bot.playerName} selects and takes a photo of ${bird.name}!`);
 
-                if (!isSuccess && useItems) {
-                    // Try to fix it with insects
-                    const insect = this._findHelpfulInsect(bot, diceValue, bird, distance);
-                    if (insect) {
-                        console.log(`[Host] Bot ${bot.playerName} uses ${insect.type} to fix roll!`);
-                        this.handleApplyBonus(insect.id, botId, (res) => {
-                            // Recalculate success (dice updated in state)
-                            // wait for callback? handleApplyBonus calls callback with newDice.
-                            // Then we proceed to resolve.
-                            setTimeout(() => {
-                                this.handleResolvePhoto(botId, (res) => { });
-                            }, 1500);
-                        });
-                        return;
+        this.handleSelectBird(bird.id, botId, (res) => {
+            if (res.success) {
+                this.handleStartPhotoRoll(bird.id, botId, (rollResult) => {
+                    if (rollResult.success) {
+                        const diceValue = rollResult.diceValue;
+                        let isSuccess = this._checkPhotoSuccess(diceValue, bird, distance);
+
+                        if (!isSuccess && useItems) {
+                            // Try to fix it with insects
+                            const insect = this._findHelpfulInsect(bot, diceValue, bird, distance);
+                            if (insect) {
+                                console.log(`[Host] Bot ${bot.playerName} uses ${insect.card_type} to fix roll!`);
+                                this.handleApplyBonus(insect.id, botId, (res) => {
+                                    setTimeout(() => {
+                                        this.handleResolvePhoto(botId, (res) => { });
+                                    }, 1500);
+                                });
+                                return;
+                            }
+                        }
+
+                        setTimeout(() => {
+                            this.handleResolvePhoto(botId, (res) => { });
+                        }, 1500);
                     }
-                }
-
-                setTimeout(() => {
-                    this.handleResolvePhoto(botId, (res) => { });
-                }, 1500);
+                });
             }
         });
     }
