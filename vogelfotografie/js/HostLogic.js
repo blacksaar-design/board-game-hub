@@ -79,6 +79,9 @@ class VogelfotografieHost {
             case 'captureAll':
                 this.handleCaptureAll(data.insectIds, senderId, callback);
                 break;
+            case 'selectBird':
+                this.handleSelectBird(data.birdId, senderId, callback);
+                break;
             case 'addBot':
                 this.addBot(data.difficulty, callback);
                 break;
@@ -139,6 +142,11 @@ class VogelfotografieHost {
     handleSneak(birdId, useInsect, insectId, senderId, callback) {
         if (!this._isTurn(senderId)) return callback({ success: false, error: 'Nicht dein Zug' });
 
+        // Target check
+        if (!this.gameState.currentBirdId || this.gameState.currentBirdId !== birdId) {
+            return callback({ success: false, error: 'Du musst den Vogel zuerst auswählen!' });
+        }
+
         const player = this.players.find(p => p.playerId === senderId);
         let result;
         if (useInsect) {
@@ -181,6 +189,11 @@ class VogelfotografieHost {
 
     handleStartPhotoRoll(birdId, senderId, callback) {
         if (!this._isTurn(senderId)) return callback({ success: false, error: 'Nicht dein Zug' });
+
+        // Target check
+        if (!this.gameState.currentBirdId || this.gameState.currentBirdId !== birdId) {
+            return callback({ success: false, error: 'Du musst den Vogel zuerst auswählen!' });
+        }
 
         const diceValue = Math.floor(Math.random() * 6) + 1;
         this.gameState.pendingAction = {
@@ -232,6 +245,7 @@ class VogelfotografieHost {
             player.score += bird.prestige_points;
             this._replaceBird(bird.id);
             this.addToLog(`📸 ${player.playerName} fotografiert den ${bird.name} (${bird.prestige_points} Pkt)!`, 'success');
+
             callback({ success: true, result: 'captured' });
         } else {
             this.gameState.birdDiscard.push(bird.id);
@@ -302,6 +316,11 @@ class VogelfotografieHost {
     handleAttract(birdId, insectIds, senderId, callback) {
         if (!this._isTurn(senderId)) return callback({ success: false, error: 'Nicht dein Zug' });
 
+        // Target check
+        if (!this.gameState.currentBirdId || this.gameState.currentBirdId !== birdId) {
+            return callback({ success: false, error: 'Du musst den Vogel zuerst auswählen!' });
+        }
+
         const player = this.players.find(p => p.playerId === senderId);
         const bird = this.gameState.visibleBirds.find(b => b.id === birdId);
 
@@ -327,6 +346,39 @@ class VogelfotografieHost {
         } else {
             callback({ success: false, error: 'Ungültige Insektenkarten' });
         }
+    }
+
+    handleSelectBird(birdId, senderId, callback) {
+        if (!this._isTurn(senderId)) return callback({ success: false, error: 'Nicht dein Zug' });
+
+        // Lock check: Once selected, cannot be changed
+        if (this.gameState.currentBirdId && this.gameState.currentBirdId !== birdId) {
+            return callback({ success: false, error: 'Du hast bereits ein Ziel gewählt!' });
+        }
+
+        if (this.gameState.currentBirdId === birdId) {
+            return callback({ success: true, alreadySelected: true });
+        }
+
+        const bird = this.gameState.visibleBirds.find(b => b.id === birdId);
+        if (!bird) return callback({ success: false, error: 'Vogel nicht gefunden' });
+
+        this.gameState.currentBirdId = birdId;
+        const player = this.players.find(p => p.playerId === senderId);
+
+        // 1-Point Bird Bonus (only on first selection)
+        if (bird.prestige_points === 1) {
+            if (this.gameState.insectDeck.length > 0) {
+                const extraInsect = this.gameState.insectDeck.shift();
+                player.hand.insects.push(extraInsect);
+                this.addToLog(`🎁 Bonus: Eine extra Insektenkarte für das Ziel ${bird.name}!`, 'action');
+            }
+        } else {
+            this.addToLog(`🎯 ${player.playerName} hat den ${bird.name} als Ziel gewählt.`, 'action');
+        }
+
+        callback({ success: true });
+        this.updateClients();
     }
 
     addBot(difficulty = 'easy', callback) {
@@ -671,8 +723,14 @@ class VogelfotografieHost {
             const matchingInsects = bot.hand.insects.filter(i => i.card_type === bird.insect_type);
             if (matchingInsects.length >= 2) {
                 const insectIds = [matchingInsects[0].id, matchingInsects[1].id];
-                console.log(`[Host] Bot ${bot.playerName} attracts ${bird.name}.`);
-                this.handleAttract(bird.id, insectIds, botId, () => { });
+                console.log(`[Host] Bot ${bot.playerName} selects and attracts ${bird.name}.`);
+
+                // Bot must select first
+                this.handleSelectBird(bird.id, botId, (res) => {
+                    if (res.success) {
+                        this.handleAttract(bird.id, insectIds, botId, () => { });
+                    }
+                });
                 return;
             }
         }
@@ -684,10 +742,15 @@ class VogelfotografieHost {
     }
 
     _botSneak(bot, botId, bird) {
-        console.log(`[Host] Bot ${bot.playerName} sneaks on ${bird.name}.`);
-        this.handleSneak(bird.id, false, null, botId, (res) => {
-            if (res.success && res.result === 'success') {
-                setTimeout(() => this.playBotTurn(botId), 1500);
+        console.log(`[Host] Bot ${bot.playerName} selects and sneaks on ${bird.name}.`);
+
+        this.handleSelectBird(bird.id, botId, (res) => {
+            if (res.success) {
+                this.handleSneak(bird.id, false, null, botId, (res) => {
+                    if (res.success && res.result === 'success') {
+                        setTimeout(() => this.playBotTurn(botId), 1500);
+                    }
+                });
             }
         });
     }

@@ -407,19 +407,25 @@ function selectBird(bird) {
     if (gameState.players[gameState.currentPlayerIndex].playerId !== gameState.playerId) return;
     if (isPhotoPending) return;
 
-    gameState.currentBirdId = bird.id;
+    // Lock check: Once selected, cannot be changed
+    if (gameState.currentBirdId && gameState.currentBirdId !== bird.id) {
+        UI.showModal('🔒', 'Gesperrt', 'Du hast bereits ein Ziel gewählt und kannst es in diesem Zug nicht mehr ändern.');
+        return;
+    }
 
-    // Update UI selected state
-    document.querySelectorAll('.bird-card').forEach(c => c.classList.remove('selected'));
-    const selectedCard = document.querySelector(`.bird-card[data-bird-id="${bird.id}"]`);
-    if (selectedCard) selectedCard.classList.add('selected');
+    if (gameState.currentBirdId === bird.id) return;
 
-    elements.selectedBirdInfo.innerHTML = `
-        <h3>${bird.name}</h3>
-        <p>${bird.prestige_points} Prestige-Punkte</p>
-    `;
-
-    updateActionButtons();
+    socket.emit('selectBird', { birdId: bird.id }, (response) => {
+        if (!response.success) {
+            UI.showModal('❌', 'Fehler', response.error);
+        } else {
+            // Success! The host has handled the bonus and set the state.
+            // We'll update the local state when the next gameStateUpdate comes, 
+            // but we can set it locally for immediate feedback if we want.
+            gameState.currentBirdId = bird.id;
+            updateActionButtons();
+        }
+    });
 }
 
 function requestHandUpdate() {
