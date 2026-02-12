@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nature Snap | Real World Wildlife Collection</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Main Camera Viewfinder -->
+        <div id="viewfinder">
+            <video id="camera-stream" autoplay playsinline></video>
+            <div class="hud">
+                <div class="scanner-box">
+                    <div class="corner tl"></div>
+                    <div class="corner tr"></div>
+                    <div class="corner bl"></div>
+                    <div class="corner br"></div>
+                    <div class="scan-line"></div>
+                </div>
+                <div class="target-info">
+                    <div id="tracking-status">READY FOR SCAN</div>
+                    <div id="species-guess">...</div>
+                </div>
+            </div>
+            
+            <div id="controls">
+                <button id="snap-btn" title="Take Photo">
+                    <div class="inner-circle"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Notification / Result Overlay -->
+        <div id="result-overlay" class="hidden">
+            <div class="result-card">
+                <div id="result-image-preview"></div>
+                <div class="result-details">
+                    <h2 id="result-name">Animal Name</h2>
+                    <p id="result-rarity">Common</p>
+                    <div class="stats">
+                        <div class="score-box">
+                            <span class="label">SCORE</span>
+                            <span id="result-score" class="value">0</span>
+                        </div>
+                    </div>
+                    <button id="close-result" class="btn">Add to Collection</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collection UI -->
+        <nav id="main-nav">
+            <button id="camera-tab" class="active">VIEWFINDER</button>
+            <button id="dex-tab">NATURE-DEX</button>
+        </nav>
+
+        <section id="nature-dex" class="hidden">
+            <header>
+                <h1>Nature-Dex</h1>
+                <p id="total-caught">Collection: 0</p>
+            </header>
+            <div id="collection-grid">
+                <!-- Items will be injected here -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Canvas for capturing frames (hidden) -->
+    <canvas id="capture-canvas" style="display: none;"></canvas>
+
+    <script src="app.js"></script>
+</body>
+</html>
