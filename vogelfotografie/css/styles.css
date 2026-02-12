@@ -1130,13 +1130,32 @@ input[type="text"]:focus {
 }
 
 .final-score-item {
-    background: var(--bg-elevated);
+    display: flex;
+    flex-direction: column;
     padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--bg-elevated);
     border-radius: var(--radius-md);
     margin-bottom: var(--spacing-sm);
+}
+
+.final-score-main {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: var(--spacing-xs);
+}
+
+.final-score-breakdown {
+    display: flex;
+    gap: var(--spacing-md);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.bonus-tag {
+    color: var(--secondary-light);
+    font-weight: 700;
 }
 
 .final-score-item.winner {
