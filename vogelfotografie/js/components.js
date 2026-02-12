@@ -107,9 +107,20 @@ function createFinalScoreItem(player, isWinner = false) {
     const item = document.createElement('div');
     item.className = `final-score-item ${isWinner ? 'winner' : ''}`;
 
+    const b = player.breakdown;
     item.innerHTML = `
-        <span>${isWinner ? '🏆 ' : ''}${player.playerName}</span>
-        <span>${player.score} Punkte</span>
+        <div class="final-score-main">
+            <span>${isWinner ? '🏆 ' : ''}${player.playerName}</span>
+            <span>${player.score} Punkte</span>
+        </div>
+        ${b ? `
+        <div class="final-score-breakdown">
+            <span>1er: ${b.counts.p1} (${b.p1}P)</span>
+            <span>2er: ${b.counts.p2} (${b.p2}P)</span>
+            <span>3er: ${b.counts.p3} (${b.p3}P)</span>
+            <span class="bonus-tag">Bonus: +${b.bonus}</span>
+        </div>
+        ` : ''}
     `;
 
     return item;

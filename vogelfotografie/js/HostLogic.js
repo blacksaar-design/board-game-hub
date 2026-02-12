@@ -839,11 +839,31 @@ class VogelfotografieHost {
     endGame() {
         this.gameState.status = 'finished';
         this.addToLog(`🏆 Das Spiel ist beendet!`, 'turn');
-        const finalScores = this.players.map(p => ({
-            playerId: p.playerId,
-            playerName: p.playerName,
-            score: p.score
-        }));
+
+        const finalScores = this.players.map(p => {
+            const birds = p.hand.birds;
+            const p1 = birds.filter(b => b.prestige_points === 1).length;
+            const p2 = birds.filter(b => b.prestige_points === 2).length;
+            const p3 = birds.filter(b => b.prestige_points === 3).length;
+
+            // New Bonus Rule: +1 Point for each 1P card more than 3P cards
+            const bonus = Math.max(0, p1 - p3);
+            const totalScore = p.score + bonus;
+
+            return {
+                playerId: p.playerId,
+                playerName: p.playerName,
+                score: totalScore, // Total including bonus
+                breakdown: {
+                    p1: p1 * 1,
+                    p2: p2 * 2,
+                    p3: p3 * 3,
+                    bonus: bonus,
+                    counts: { p1, p2, p3 }
+                }
+            };
+        });
+
         this.bridge.broadcast('gameEnded', { finalScores });
     }
 
