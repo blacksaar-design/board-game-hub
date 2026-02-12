@@ -8,6 +8,9 @@ class VogelfotografieHost {
         this.bridge = bridge;
         this.cards = null;
         this.players = [];
+        this.rules = {
+            birdBonusEnabled: false // Request: "Deaktiviere die Bonusregel für 1 Punkt Vögel, lass sie aber so dass sie leicht wieder aktiviert werden kann"
+        };
         this.gameState = {
             birdDeck: [],
             insectDeck: [],
@@ -151,7 +154,7 @@ class VogelfotografieHost {
         if (!this._isTurn(senderId)) return callback({ success: false, error: 'Nicht dein Zug' });
 
         // Target check
-        if (!this.gameState.currentBirdId || this.gameState.currentBirdId !== birdId) {
+        if (!this.gameState.currentBirdId || this.gameState.currentBirdId != birdId) {
             return callback({ success: false, error: 'Du musst den Vogel zuerst auswählen!' });
         }
 
@@ -182,6 +185,7 @@ class VogelfotografieHost {
             // Draw compensatory insect
             if (this.gameState.insectDeck.length > 0) {
                 player.hand.insects.push(this.gameState.insectDeck.shift());
+                this.addToLog(`🐜 Trostpreis: Ein Insekt für den entgangenen ${bird.name}.`, 'action');
             }
 
             this.gameState.currentDistance = 0;
@@ -199,7 +203,7 @@ class VogelfotografieHost {
         if (!this._isTurn(senderId)) return callback({ success: false, error: 'Nicht dein Zug' });
 
         // Target check
-        if (!this.gameState.currentBirdId || this.gameState.currentBirdId !== birdId) {
+        if (!this.gameState.currentBirdId || this.gameState.currentBirdId != birdId) {
             return callback({ success: false, error: 'Du musst den Vogel zuerst auswählen!' });
         }
 
@@ -260,12 +264,10 @@ class VogelfotografieHost {
             this._replaceBird(bird.id);
             this.addToLog(`🌫️ ${player.playerName} verpasst den ${bird.name} (Würfel: ${action.diceValue})...`, 'fail');
 
-            // Draw compensatory insect (only for 1-2 point birds)
-            if (bird.prestige_points < 3 && this.gameState.insectDeck.length > 0) {
+            // Draw compensatory insect
+            if (this.gameState.insectDeck.length > 0) {
                 player.hand.insects.push(this.gameState.insectDeck.shift());
                 this.addToLog(`🐜 Trostpreis: Ein Insekt für den entgangenen ${bird.name}.`, 'action');
-            } else if (bird.prestige_points >= 3) {
-                this.addToLog(`🌫️ Keine Entschädigung für wertvolle 3-Punkte-Vögel!`, 'fail');
             }
 
             callback({ success: true, result: 'scared' });
@@ -328,7 +330,7 @@ class VogelfotografieHost {
         if (!this._isTurn(senderId)) return callback({ success: false, error: 'Nicht dein Zug' });
 
         // Target check
-        if (!this.gameState.currentBirdId || this.gameState.currentBirdId !== birdId) {
+        if (!this.gameState.currentBirdId || this.gameState.currentBirdId != birdId) {
             return callback({ success: false, error: 'Du musst den Vogel zuerst auswählen!' });
         }
 
@@ -363,8 +365,8 @@ class VogelfotografieHost {
         if (!this._isTurn(senderId)) return callback({ success: false, error: 'Nicht dein Zug' });
 
         // Lock check: Once selected, cannot be changed
-        if (this.gameState.currentBirdId && this.gameState.currentBirdId !== birdId) {
-            return callback({ success: false, error: 'Du hast bereits ein Ziel gewählt!' });
+        if (this.gameState.currentBirdId && this.gameState.currentBirdId != birdId) {
+            return callback({ success: false, error: 'Du schleichst dich bereits an einen anderen Vogel an!' });
         }
 
         if (this.gameState.currentBirdId === birdId) {
@@ -378,7 +380,7 @@ class VogelfotografieHost {
         const player = this.players.find(p => p.playerId === senderId);
 
         // 1-Point Bird Bonus (only on first selection and only in Multi-player)
-        if (bird.prestige_points === 1 && this.players.length > 1) {
+        if (this.rules.birdBonusEnabled && bird.prestige_points === 1 && this.players.length > 1) {
             if (this.gameState.insectDeck.length > 0) {
                 const extraInsect = this.gameState.insectDeck.shift();
                 player.hand.insects.push(extraInsect);
@@ -765,8 +767,16 @@ class VogelfotografieHost {
                 this.handleSneak(bird.id, false, null, botId, (res) => {
                     if (res.success && res.result === 'success') {
                         setTimeout(() => this.playBotTurn(botId), 1500);
+                    } else if (res.success) {
+                        // Sneak failed (scared) or other result - handled inside handleSneak (nextTurn)
+                    } else {
+                        console.error(`[Host] Bot ${bot.playerName} Sneak failed:`, res.error);
+                        this.nextTurn();
                     }
                 });
+            } else {
+                console.error(`[Host] Bot ${bot.playerName} Selection failed:`, res.error);
+                this.nextTurn();
             }
         });
     }
@@ -798,8 +808,14 @@ class VogelfotografieHost {
                         setTimeout(() => {
                             this.handleResolvePhoto(botId, (res) => { });
                         }, 1500);
+                    } else {
+                        console.error(`[Host] Bot ${bot.playerName} Photo Roll failed:`, rollResult.error);
+                        this.nextTurn();
                     }
                 });
+            } else {
+                console.error(`[Host] Bot ${bot.playerName} Selection failed:`, res.error);
+                this.nextTurn();
             }
         });
     }
