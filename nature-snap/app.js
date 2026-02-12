@@ -2,20 +2,14 @@
  * Nature Snap - Core Logic
  */
 
+const VERSION = "1.1.0-AI";
+
 const state = {
     model: null,
     stream: null,
     isProcessing: false,
     collection: JSON.parse(localStorage.getItem('nature_collection') || '[]'),
     animalClasses: ['bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe'],
-    mockAnimals: [
-        { name: 'Red Fox', rarity: 'Rare', baseScore: 850 },
-        { name: 'Common Blackbird', rarity: 'Common', baseScore: 120 },
-        { name: 'European Rabbit', rarity: 'Common', baseScore: 250 },
-        { name: 'Roe Deer', rarity: 'Uncommon', baseScore: 540 },
-        { name: 'Red Squirrel', rarity: 'Uncommon', baseScore: 480 },
-        { name: 'Great Spotted Woodpecker', rarity: 'Rare', baseScore: 920 }
-    ]
 };
 
 // DOM Elements
@@ -93,8 +87,12 @@ function captureSnapshot() {
  * Process AI Predictions
  */
 function processPredictions(predictions, width, height) {
-    // Filter for animals
-    const animalDetections = predictions.filter(p => state.animalClasses.includes(p.class));
+    console.log("AI Predictions:", predictions);
+
+    // Filter for animals with at least 60% confidence
+    const animalDetections = predictions.filter(p =>
+        state.animalClasses.includes(p.class) && p.score > 0.6
+    );
 
     if (animalDetections.length === 0) return null;
 
