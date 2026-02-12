@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,8 +8,11 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Space+Grotesk:wght@500;700&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <div id="app">
         <!-- Main Camera Viewfinder -->
@@ -27,7 +31,7 @@
                     <div id="species-guess">...</div>
                 </div>
             </div>
-            
+
             <div id="controls">
                 <button id="snap-btn" title="Take Photo">
                     <div class="inner-circle"></div>
@@ -42,6 +46,34 @@
                 <div class="result-details">
                     <h2 id="result-name">Animal Name</h2>
                     <p id="result-rarity">Common</p>
+
+                    <div id="scoring-breakdown">
+                        <div class="score-category">
+                            <span>Größe</span>
+                            <div class="score-bar">
+                                <div id="score-size" class="fill"></div>
+                            </div>
+                        </div>
+                        <div class="score-category">
+                            <span>Blickrichtung</span>
+                            <div class="score-bar">
+                                <div id="score-gaze" class="fill"></div>
+                            </div>
+                        </div>
+                        <div class="score-category">
+                            <span>Position</span>
+                            <div class="score-bar">
+                                <div id="score-pos" class="fill"></div>
+                            </div>
+                        </div>
+                        <div class="score-category">
+                            <span>Weitere Tiere</span>
+                            <div class="score-bar">
+                                <div id="score-bonus" class="fill"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="stats">
                         <div class="score-box">
                             <span class="label">SCORE</span>
@@ -75,4 +107,5 @@
 
     <script src="app.js"></script>
 </body>
+
 </html>

@@ -84,12 +84,31 @@ function identifyAnimal(image) {
     const randomIndex = Math.floor(Math.random() * state.mockAnimals.length);
     const animal = state.mockAnimals[randomIndex];
 
-    // Add some random variation to score
-    const qualityBonus = Math.floor(Math.random() * 200);
-    const totalScore = animal.baseScore + qualityBonus;
+    // Calculate 4 categories (Normalized 0-100)
+    // Größe: Basierend auf zufälliger Entfernung
+    const sizeScore = Math.floor(Math.random() * 100);
+    // Blickrichtung: Basierend auf zufälliger Pose
+    const gazeScore = Math.floor(Math.random() * 100);
+    // Position: Basierend auf Zentrierung im Bild
+    const posScore = Math.floor(Math.random() * 100);
+    // Weitere Tiere: Seltener Bonus
+    const bonusScore = Math.random() > 0.8 ? Math.floor(Math.random() * 100) : 0;
+
+    const scores = {
+        size: sizeScore,
+        gaze: gazeScore,
+        pos: posScore,
+        bonus: bonusScore
+    };
+
+    // Calculate total score based on weights
+    // Basis-Rarität zählt 50%, der Rest kommt über die Qualität
+    const qualityScore = (sizeScore * 10) + (gazeScore * 8) + (posScore * 12) + (bonusScore * 5);
+    const totalScore = Math.floor(animal.baseScore + qualityScore);
 
     return {
         ...animal,
+        categories: scores,
         score: totalScore,
         id: Date.now()
     };
@@ -103,6 +122,14 @@ function showResult(result, imageData) {
     document.getElementById('result-name').innerText = result.name;
     document.getElementById('result-rarity').innerText = result.rarity.toUpperCase();
     document.getElementById('result-score').innerText = result.score;
+
+    // Update Score Bars with animation delay
+    setTimeout(() => {
+        document.getElementById('score-size').style.width = `${result.categories.size}%`;
+        document.getElementById('score-gaze').style.width = `${result.categories.gaze}%`;
+        document.getElementById('score-pos').style.width = `${result.categories.pos}%`;
+        document.getElementById('score-bonus').style.width = `${result.categories.bonus}%`;
+    }, 100);
 
     overlay.classList.remove('hidden');
 
