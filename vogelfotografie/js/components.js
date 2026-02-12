@@ -92,7 +92,10 @@ function createPlayerCard(player, isActive = false) {
                 ${player.playerName.charAt(0).toUpperCase()}
             </div>
             <div class="player-card-name">${player.playerName}</div>
-            <div class="player-card-score">${player.score}</div>
+            <div class="player-card-stats">
+                <div class="player-card-score">🏆 ${player.score}</div>
+                <div class="player-card-insects">🦗 ${player.insectCount || 0}</div>
+            </div>
         </div>
     `;
 

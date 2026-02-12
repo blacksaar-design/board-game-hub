@@ -537,10 +537,23 @@ input[type="text"]:focus {
     font-weight: 600;
 }
 
+.player-card-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
 .player-card-score {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--paint-gold);
+}
+
+.player-card-insects {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
 }
 
 /* Game Board */

@@ -260,9 +260,12 @@ class VogelfotografieHost {
             this._replaceBird(bird.id);
             this.addToLog(`🌫️ ${player.playerName} verpasst den ${bird.name} (Würfel: ${action.diceValue})...`, 'fail');
 
-            // Draw compensatory insect
-            if (this.gameState.insectDeck.length > 0) {
+            // Draw compensatory insect (only for 1-2 point birds)
+            if (bird.prestige_points < 3 && this.gameState.insectDeck.length > 0) {
                 player.hand.insects.push(this.gameState.insectDeck.shift());
+                this.addToLog(`🐜 Trostpreis: Ein Insekt für den entgangenen ${bird.name}.`, 'action');
+            } else if (bird.prestige_points >= 3) {
+                this.addToLog(`🌫️ Keine Entschädigung für wertvolle 3-Punkte-Vögel!`, 'fail');
             }
 
             callback({ success: true, result: 'scared' });
@@ -855,7 +858,8 @@ class VogelfotografieHost {
                 playerId: p.playerId,
                 playerName: p.playerName,
                 playerOrder: p.playerOrder,
-                score: p.score
+                score: p.score,
+                insectCount: p.hand.insects.length
             }))
         };
     }
