@@ -178,6 +178,7 @@ class VogelfotografieHost {
             callback({ success: true, result: 'success', newDistance: this.gameState.currentDistance, diceValue: result });
         } else {
             // Bird flies away!
+            const bird = this.gameState.visibleBirds.find(b => b.id == birdId);
             this.addToLog(`🌬️ ${player.playerName} schleicht sich an... Vogel ist weggeflogen!`, 'fail');
             this.gameState.birdDiscard.push(birdId);
             this._replaceBird(birdId);
@@ -185,7 +186,7 @@ class VogelfotografieHost {
             // Draw compensatory insect
             if (this.gameState.insectDeck.length > 0) {
                 player.hand.insects.push(this.gameState.insectDeck.shift());
-                this.addToLog(`🐜 Trostpreis: Ein Insekt für den entgangenen ${bird.name}.`, 'action');
+                this.addToLog(`🐜 Trostpreis: Ein Insekt für den entgangenen ${bird ? bird.name : 'Vogel'}.`, 'action');
             }
 
             this.gameState.currentDistance = 0;
