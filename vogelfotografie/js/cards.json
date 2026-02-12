@@ -267,7 +267,7 @@
       "insect_type": "caterpillar",
       "prestige_points": 2,
       "distance_far_dice": "1",
-      "distance_mid_dice": null,
+      "distance_mid_dice": "2",
       "distance_near_dice": null
     },
     {
@@ -680,6 +680,86 @@
     },
     {
       "id": 48,
+      "card_type": "grasshopper",
+      "bonus_action": "reroll"
+    },
+    {
+      "id": 49,
+      "card_type": "caterpillar",
+      "bonus_action": "decrease"
+    },
+    {
+      "id": 50,
+      "card_type": "caterpillar",
+      "bonus_action": "increase"
+    },
+    {
+      "id": 51,
+      "card_type": "caterpillar",
+      "bonus_action": "flip"
+    },
+    {
+      "id": 52,
+      "card_type": "caterpillar",
+      "bonus_action": "reroll"
+    },
+    {
+      "id": 53,
+      "card_type": "ant",
+      "bonus_action": "decrease"
+    },
+    {
+      "id": 54,
+      "card_type": "ant",
+      "bonus_action": "increase"
+    },
+    {
+      "id": 55,
+      "card_type": "ant",
+      "bonus_action": "flip"
+    },
+    {
+      "id": 56,
+      "card_type": "ant",
+      "bonus_action": "reroll"
+    },
+    {
+      "id": 57,
+      "card_type": "fly",
+      "bonus_action": "decrease"
+    },
+    {
+      "id": 58,
+      "card_type": "fly",
+      "bonus_action": "increase"
+    },
+    {
+      "id": 59,
+      "card_type": "fly",
+      "bonus_action": "flip"
+    },
+    {
+      "id": 60,
+      "card_type": "fly",
+      "bonus_action": "reroll"
+    },
+    {
+      "id": 61,
+      "card_type": "grasshopper",
+      "bonus_action": "decrease"
+    },
+    {
+      "id": 62,
+      "card_type": "grasshopper",
+      "bonus_action": "increase"
+    },
+    {
+      "id": 63,
+      "card_type": "grasshopper",
+      "bonus_action": "flip"
+    },
+    {
+      "id": 64,
       "card_type": "grasshopper",
       "bonus_action": "reroll"
     }

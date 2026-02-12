@@ -98,7 +98,17 @@ class VogelfotografieHost {
 
         // Shuffle cards
         this.gameState.birdDeck = this._shuffle([...this.cards.birds]);
-        this.gameState.insectDeck = this._shuffle([...this.cards.insects]);
+
+        // Solo Mode: only 1 player total (no other humans, no bots)
+        const isSoloMode = this.players.length === 1;
+        let baseInsectDeck = [...this.cards.insects];
+
+        if (isSoloMode) {
+            baseInsectDeck = baseInsectDeck.filter(i => i.id <= 32);
+            this.addToLog('ℹ️ Solo-Modus: Insektenstapel auf 32 Karten begrenzt.', 'system-msg');
+        }
+
+        this.gameState.insectDeck = this._shuffle(baseInsectDeck);
 
         // Visible birds (top 3)
         this.gameState.visibleBirds = this.gameState.birdDeck.splice(0, 3);
