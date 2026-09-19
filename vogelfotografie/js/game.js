@@ -529,21 +529,11 @@ function updateActionButtons() {
         }
     }
 
-    elements.captureAllBtn.style.display = canCaptureAll ? 'block' : 'none';
     elements.captureAllBtn.disabled = !canCaptureAll;
     if (canCaptureAll) {
         elements.captureAllBtn.innerHTML = `<span class="btn-icon">📸✨</span> ${captureCount} Vögel fangen`;
-    }
-
-    // Capture-All hint: show when photo is pending but not yet triggered
-    const hintEl = document.getElementById('captureAllHint');
-    if (hintEl) {
-        const couldTriggerCaptureAll = isPhotoPending && isMyTurn && !canCaptureAll
-            && gameState.myHand && gameState.myHand.insects.some(i => {
-                const sameType = gameState.myHand.insects.filter(j => j.card_type === i.card_type);
-                return sameType.length >= 3;
-            });
-        hintEl.style.display = couldTriggerCaptureAll ? 'block' : 'none';
+    } else {
+        elements.captureAllBtn.innerHTML = `<span class="btn-icon">📸✨</span> Alle fotografieren`;
     }
 
     // Attract button visibility (optional, but keep consistent)

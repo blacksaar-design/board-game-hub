@@ -1562,13 +1562,3 @@ input[type="text"]:focus {
     opacity: 1;
     background: rgba(255, 255, 255, 0.1);
 }
-
-/* ── Capture-All Hint ────────────────────────────────────────── */
-.capture-all-hint {
-    display: none;
-    text-align: center;
-    font-size: 0.8rem;
-    color: var(--warning-color);
-    margin-top: 6px;
-    animation: pulse 1.5s infinite;
-}
