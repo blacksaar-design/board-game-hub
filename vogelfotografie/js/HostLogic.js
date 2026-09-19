@@ -926,6 +926,7 @@ class VogelfotografieHost {
                     playerId: s.p.playerId,
                     playerName: s.p.playerName,
                     score: totalScore,
+                    birds: s.birds,
                     breakdown: {
                         p1: s.p1 * 1, p2: s.p2 * 2, p3: s.p3 * 3,
                         bonus: bonus,
@@ -941,6 +942,7 @@ class VogelfotografieHost {
                     playerId: s.p.playerId,
                     playerName: s.p.playerName,
                     score: totalScore,
+                    birds: s.birds,
                     breakdown: {
                         p1: s.p1 * 1, p2: s.p2 * 2, p3: s.p3 * 3,
                         bonus: bonus,

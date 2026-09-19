@@ -107,6 +107,19 @@ function createFinalScoreItem(player, isWinner = false) {
     const item = document.createElement('div');
     item.className = `final-score-item ${isWinner ? 'winner' : ''}`;
 
+    let birdsHtml = '';
+    if (player.birds && player.birds.length > 0) {
+        const birdsIcons = player.birds.map(b => `<span class="mini-bird" title="${b.name}">🐦 ${b.prestige_points}P</span>`).join(', ');
+        birdsHtml = `
+            <details class="final-birds-details" style="margin-top: 10px; font-size: 0.85rem; cursor: pointer;">
+                <summary style="color: var(--primary-light);">Vögel anzeigen (${player.birds.length})</summary>
+                <div class="final-birds-list" style="margin-top: 5px; color: var(--text-secondary);">
+                    ${birdsIcons}
+                </div>
+            </details>
+        `;
+    }
+
     const b = player.breakdown;
     if (b && b.advanced) {
         item.innerHTML = `
@@ -119,6 +132,7 @@ function createFinalScoreItem(player, isWinner = false) {
                 <span>Mehrheit (1er): +${b.advanced.majority}P</span>
                 <span>Sets: +${(b.advanced.s4 * 4) + (b.advanced.s3 * 2)}P <small>(${b.advanced.s4}x 4er, ${b.advanced.s3}x 3er)</small></span>
             </div>
+            ${birdsHtml}
         `;
     } else if (b) {
         item.innerHTML = `
@@ -132,6 +146,7 @@ function createFinalScoreItem(player, isWinner = false) {
                 <span>3er: ${b.counts.p3} (${b.p3}P)</span>
                 <span class="bonus-tag">Bonus: +${b.bonus}</span>
             </div>
+            ${birdsHtml}
         `;
     } else {
         item.innerHTML = `
@@ -139,6 +154,7 @@ function createFinalScoreItem(player, isWinner = false) {
                 <span>${isWinner ? '🏆 ' : ''}${player.playerName}</span>
                 <span>${player.score} Punkte</span>
             </div>
+            ${birdsHtml}
         `;
     }
 

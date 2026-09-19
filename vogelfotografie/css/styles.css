@@ -295,9 +295,15 @@ input[type="text"]:focus {
     box-shadow: 0 4px 12px hsla(var(--primary-hue), 60%, 55%, 0.3);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
     background: var(--primary-dark);
+}
+
+.btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
 }
 
 .btn-secondary {
@@ -306,9 +312,15 @@ input[type="text"]:focus {
     box-shadow: 0 4px 12px hsla(var(--secondary-hue), 35%, 50%, 0.3);
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
     transform: translateY(-1px);
     background: hsl(var(--secondary-hue), 35%, 40%);
+}
+
+.btn-secondary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
 }
 
 .btn-ghost {
@@ -344,7 +356,7 @@ input[type="text"]:focus {
     transform: translateY(-2px);
 }
 
-.btn-action:disabled {
+.btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
