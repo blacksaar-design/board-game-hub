@@ -62,7 +62,7 @@ class VogelfotografieHost {
                 this.addPlayer(senderId, data.playerName, callback);
                 break;
             case 'startGame':
-                this.startGame(callback);
+                this.startGame(data, callback);
                 break;
             case 'sneak':
                 this.handleSneak(data.birdId, data.useInsect, data.insectId, senderId, callback);
@@ -97,9 +97,16 @@ class VogelfotografieHost {
         }
     }
 
-    startGame(callback) {
+    startGame(data, callback) {
         if (this.players.length < 1) {
             return callback({ success: false, error: 'Mindest 1 Spieler erforderlich' });
+        }
+
+        // Save rules
+        if (data && data.mode) {
+            this.rules.scoringMode = data.mode;
+        } else {
+            this.rules.scoringMode = 'standard';
         }
 
         // Shuffle cards
@@ -841,31 +848,109 @@ class VogelfotografieHost {
         this.gameState.status = 'finished';
         this.addToLog(`🏆 Das Spiel ist beendet!`, 'turn');
 
-        const finalScores = this.players.map(p => {
+        // Pre-calculate base stats
+        const stats = this.players.map(p => {
             const birds = p.hand.birds;
             const p1 = birds.filter(b => b.prestige_points === 1).length;
             const p2 = birds.filter(b => b.prestige_points === 2).length;
             const p3 = birds.filter(b => b.prestige_points === 3).length;
-
-            // New Bonus Rule: +1 Point for each 1P card more than 3P cards
-            const bonus = Math.max(0, p1 - p3);
-            const totalScore = p.score + bonus;
-
-            return {
-                playerId: p.playerId,
-                playerName: p.playerName,
-                score: totalScore, // Total including bonus
-                breakdown: {
-                    p1: p1 * 1,
-                    p2: p2 * 2,
-                    p3: p3 * 3,
-                    bonus: bonus,
-                    counts: { p1, p2, p3 }
-                }
-            };
+            return { p, p1, p2, p3, birds, majorityBonus: 0, s3Count: 0, s4Count: 0 };
         });
 
-        this.bridge.broadcast('gameEnded', { finalScores });
+        if (this.rules.scoringMode === 'advanced') {
+            // Majority logic (1P birds)
+            const pc = this.players.length;
+            const majorityPoints = pc >= 4 ? [5, 3, 1, 0] : (pc === 3 ? [5, 3, 0] : [5, 0]);
+
+            const grouped = {};
+            stats.forEach(s => {
+                if (!grouped[s.p1]) grouped[s.p1] = [];
+                grouped[s.p1].push(s);
+            });
+
+            const uniqueCounts = Object.keys(grouped).map(Number).sort((a, b) => b - a);
+            let currentRankIndex = 0;
+            uniqueCounts.forEach(count => {
+                const reward = (currentRankIndex < majorityPoints.length) ? majorityPoints[currentRankIndex] : 0;
+                // Award points if they actually have 1P birds, or even if they have 0? Usually having 0 means no majority.
+                if (count > 0) {
+                    grouped[count].forEach(s => s.majorityBonus = reward);
+                }
+                currentRankIndex += grouped[count].length; // skip subsequent points for tied players
+            });
+        }
+
+        const finalScores = stats.map(s => {
+            let bonus = 0;
+            let totalScore = s.p.score;
+
+            if (this.rules.scoringMode === 'advanced') {
+                // Sets logic for 4-different (S4) and 3-same (S3)
+                const types = { 'ant': 0, 'caterpillar': 0, 'grasshopper': 0, 'fly': 0 };
+                s.birds.forEach(b => {
+                    if (types[b.insect_type] !== undefined) types[b.insect_type]++;
+                });
+
+                let maxSetsScore = -1;
+                let bestS3 = 0, bestS4 = 0;
+                const minCount = Math.min(...Object.values(types));
+
+                // Brute-force through possible S4 set amounts to find max points
+                for (let s4 = 0; s4 <= minCount; s4++) {
+                    const remaining = {
+                        'ant': types['ant'] - s4,
+                        'caterpillar': types['caterpillar'] - s4,
+                        'grasshopper': types['grasshopper'] - s4,
+                        'fly': types['fly'] - s4
+                    };
+                    const s3 = Math.floor(remaining.ant / 3) +
+                        Math.floor(remaining.caterpillar / 3) +
+                        Math.floor(remaining.grasshopper / 3) +
+                        Math.floor(remaining.fly / 3);
+
+                    const score = (s4 * 4) + (s3 * 2);
+                    if (score > maxSetsScore) {
+                        maxSetsScore = score;
+                        bestS4 = s4;
+                        bestS3 = s3;
+                    }
+                }
+
+                s.s3Count = bestS3;
+                s.s4Count = bestS4;
+
+                bonus = s.majorityBonus + maxSetsScore;
+                totalScore += bonus;
+
+                return {
+                    playerId: s.p.playerId,
+                    playerName: s.p.playerName,
+                    score: totalScore,
+                    breakdown: {
+                        p1: s.p1 * 1, p2: s.p2 * 2, p3: s.p3 * 3,
+                        bonus: bonus,
+                        advanced: { majority: s.majorityBonus, s3: s.s3Count, s4: s.s4Count },
+                        counts: { p1: s.p1, p2: s.p2, p3: s.p3 }
+                    }
+                };
+            } else {
+                // Standard logic
+                bonus = Math.max(0, s.p1 - s.p3);
+                totalScore += bonus;
+                return {
+                    playerId: s.p.playerId,
+                    playerName: s.p.playerName,
+                    score: totalScore,
+                    breakdown: {
+                        p1: s.p1 * 1, p2: s.p2 * 2, p3: s.p3 * 3,
+                        bonus: bonus,
+                        counts: { p1: s.p1, p2: s.p2, p3: s.p3 }
+                    }
+                };
+            }
+        });
+
+        this.bridge.broadcast('gameEnded', { finalScores, mode: this.rules.scoringMode });
     }
 
     _replaceBird(birdId) {

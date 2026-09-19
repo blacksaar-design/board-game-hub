@@ -64,6 +64,14 @@
                 <div id="playersList" class="players-list"></div>
                 <p class="player-count"><span id="playerCount">0</span> / 4 Spieler</p>
             </div>
+            <div class="rules-selection" id="rulesSelection" style="display: none; margin-bottom: 20px;">
+                <label for="scoringMode"
+                    style="display: block; margin-bottom: 8px; font-weight: 600;">Wertungs-Modus:</label>
+                <select id="scoringMode" class="btn btn-secondary" style="width: 100%;">
+                    <option value="standard">🔰 Standard (Einfach)</option>
+                    <option value="advanced">🏆 Erweitert (Mehrheiten & Sets)</option>
+                </select>
+            </div>
 
             <button id="startGameBtn" class="btn btn-primary btn-large">Spiel starten</button>
             <button id="leaveLobbyBtn" class="btn btn-ghost">Raum verlassen</button>

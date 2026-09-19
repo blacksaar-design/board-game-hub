@@ -140,7 +140,10 @@ elements.leaveLobbyBtn.addEventListener('click', () => {
 });
 
 elements.startGameBtn.addEventListener('click', () => {
-    socket.emit('startGame', (response) => {
+    const rulesSelect = document.getElementById('scoringMode');
+    const mode = rulesSelect ? rulesSelect.value : 'standard';
+
+    socket.emit('startGame', { mode }, (response) => {
         if (!response.success) {
             UI.showModal('❌', 'Fehler', response.error);
         }
@@ -258,9 +261,11 @@ socket.on('playerListUpdate', (players) => {
     });
     elements.playerCount.textContent = players.length;
 
-    // Auto-show/hide start button only for host
+    // Auto-show/hide start button and rules only for host
     const isHost = socket.isHost;
     elements.startGameBtn.style.display = isHost ? 'block' : 'none';
+    const rulesSelection = document.getElementById('rulesSelection');
+    if (rulesSelection) rulesSelection.style.display = isHost ? 'block' : 'none';
 
     // Force Bot Button Logic
     if (isHost) {
