@@ -18,6 +18,7 @@
     <div class="status-indicator">
         <div class="status-dot" id="statusDot"></div>
         <span id="statusText">Initialisiere P2P-Netzwerk...</span>
+        <button id="soundToggleBtn" class="btn-sound-toggle" title="Sounds an/aus">🔊</button>
     </div>
 
     <!-- Lobby Screen -->
@@ -147,6 +148,8 @@
                                 Vogel anlocken
                             </button>
                         </div>
+                        <div class="capture-all-hint" id="captureAllHint">💡 Wähle 3 gleiche Insekten nach dem Würfeln
+                            für einen Mega-Foto-Angriff!</div>
 
                         <div class="dice-area" id="diceArea">
                             <div class="dice" id="dice">?</div>
@@ -199,6 +202,7 @@
         </div>
     </div>
 
+    <script src="js/SoundManager.js?v=1"></script>
     <script src="js/HostLogic.js?v=11"></script>
     <script src="js/SocketBridge.js?v=11"></script>
     <script src="js/components.js?v=11"></script>

@@ -1543,3 +1543,32 @@ input[type="text"]:focus {
         margin-top: var(--spacing-lg);
     }
 }
+
+/* ── Sound Toggle Button ─────────────────────────────────────── */
+.btn-sound-toggle {
+    background: transparent;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: 8px;
+    opacity: 0.7;
+    transition: opacity var(--transition-fast), background var(--transition-fast);
+    line-height: 1;
+}
+
+.btn-sound-toggle:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Capture-All Hint ────────────────────────────────────────── */
+.capture-all-hint {
+    display: none;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--warning-color);
+    margin-top: 6px;
+    animation: pulse 1.5s infinite;
+}

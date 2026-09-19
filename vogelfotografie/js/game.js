@@ -151,6 +151,8 @@ elements.startGameBtn.addEventListener('click', () => {
 elements.sneakBtn.addEventListener('click', () => {
     if (!gameState.currentBirdId) return;
 
+    if (window.Sounds) window.Sounds.playSneak();
+
     const useInsect = gameState.selectedInsects.length > 0;
     const insectId = useInsect ? gameState.selectedInsects[0] : null;
 
@@ -165,6 +167,8 @@ elements.sneakBtn.addEventListener('click', () => {
 elements.photoBtn.addEventListener('click', () => {
     if (!gameState.currentBirdId) return;
 
+    if (window.Sounds) window.Sounds.playPhotoClick();
+
     socket.emit('startPhotoRoll', { birdId: gameState.currentBirdId }, (response) => {
         if (response.success) {
             isPhotoPending = true;
@@ -176,6 +180,8 @@ elements.photoBtn.addEventListener('click', () => {
 
 elements.applyBonusBtn.addEventListener('click', () => {
     if (gameState.selectedInsects.length === 0) return;
+
+    if (window.Sounds) window.Sounds.playInsectBonus();
 
     socket.emit('applyBonusToPhoto', gameState.selectedInsects[0], (response) => {
         if (response.success) {
@@ -192,8 +198,10 @@ elements.confirmBtn.addEventListener('click', () => {
         if (response.success) {
             isPhotoPending = false;
             if (response.result === 'captured') {
+                if (window.Sounds) window.Sounds.playCaptureSuccess();
                 UI.showModal('📸', 'Foto gemacht!', 'Du hast den Vogel erfolgreich fotografiert.');
             } else if (response.result === 'scared') {
+                if (window.Sounds) window.Sounds.playFail();
                 UI.showModal('💨', 'Vogel weg!', 'Das Foto ist leider nichts geworden und der Vogel ist weg.');
             }
             gameState.selectedInsects = [];
@@ -207,6 +215,7 @@ elements.attractBtn.addEventListener('click', () => {
 
     socket.emit('attract', { birdId: gameState.currentBirdId, insectIds: gameState.selectedInsects }, (response) => {
         if (response.success) {
+            if (window.Sounds) window.Sounds.playAttract();
             UI.showModal('✨', 'Vogel angelockt!', 'Du hast den Vogel mit deinen Insekten angelockt.');
             gameState.selectedInsects = [];
             requestHandUpdate();
@@ -220,6 +229,7 @@ elements.captureAllBtn.addEventListener('click', () => {
     socket.emit('captureAll', { insectIds: gameState.selectedInsects }, (response) => {
         if (response.success) {
             isPhotoPending = false;
+            if (window.Sounds) window.Sounds.playMegaCapture();
             UI.showModal('📸✨', 'Mega-Foto!', `Du hast ${response.count} Vögel gleichzeitig fotografiert!`);
             gameState.selectedInsects = [];
             requestHandUpdate();
@@ -334,8 +344,10 @@ socket.on('gameStateUpdate', (state) => {
 });
 
 socket.on('diceRolled', (data) => {
+    if (!data.skipAnimation && window.Sounds) window.Sounds.playDiceRoll();
     UI.animateDice(elements.dice, data.diceValue, () => {
         if (data.diceValue === 'bird') {
+            if (window.Sounds) window.Sounds.playFail();
             UI.showModal('🕊️', 'Vogel weg!', 'Der Vogel wurde aufgeschreckt und ist weggeflogen.');
         }
     }, data.skipAnimation);
@@ -362,6 +374,7 @@ socket.on('gameEnded', (data) => {
     elements.finalScores.innerHTML = '';
     const winnerId = data.finalScores.reduce((prev, current) => (prev.score > current.score) ? prev : current).playerId;
 
+    if (window.Sounds) window.Sounds.playGameEnd();
     data.finalScores.sort((a, b) => b.score - a.score).forEach(player => {
         elements.finalScores.appendChild(UI.createFinalScoreItem(player, player.playerId === winnerId));
     });
@@ -370,7 +383,13 @@ socket.on('gameEnded', (data) => {
 
 // Helper Functions
 function updateGameState(state) {
+    const prevPlayerIndex = gameState.currentPlayerIndex;
     Object.assign(gameState, state);
+
+    // Play new-turn sound when the active player changes
+    if (typeof prevPlayerIndex === 'number' && state.currentPlayerIndex !== prevPlayerIndex) {
+        if (window.Sounds) window.Sounds.playNewTurn();
+    }
 
     elements.gameRoomCode.textContent = gameState.roomCode;
     elements.birdDeckCount.textContent = state.birdDeckCount;
@@ -415,13 +434,12 @@ function selectBird(bird) {
 
     if (gameState.currentBirdId === bird.id) return;
 
+    if (window.Sounds) window.Sounds.playSelectBird();
+
     socket.emit('selectBird', { birdId: bird.id }, (response) => {
         if (!response.success) {
             UI.showModal('❌', 'Fehler', response.error);
         } else {
-            // Success! The host has handled the bonus and set the state.
-            // We'll update the local state when the next gameStateUpdate comes, 
-            // but we can set it locally for immediate feedback if we want.
             gameState.currentBirdId = bird.id;
             updateActionButtons();
         }
@@ -517,6 +535,17 @@ function updateActionButtons() {
         elements.captureAllBtn.innerHTML = `<span class="btn-icon">📸✨</span> ${captureCount} Vögel fangen`;
     }
 
+    // Capture-All hint: show when photo is pending but not yet triggered
+    const hintEl = document.getElementById('captureAllHint');
+    if (hintEl) {
+        const couldTriggerCaptureAll = isPhotoPending && isMyTurn && !canCaptureAll
+            && gameState.myHand && gameState.myHand.insects.some(i => {
+                const sameType = gameState.myHand.insects.filter(j => j.card_type === i.card_type);
+                return sameType.length >= 3;
+            });
+        hintEl.style.display = couldTriggerCaptureAll ? 'block' : 'none';
+    }
+
     // Attract button visibility (optional, but keep consistent)
     elements.attractBtn.style.display = !isPhotoPending && isMyTurn ? 'block' : 'none';
 }
@@ -524,3 +553,14 @@ function updateActionButtons() {
 // Initial status
 const dot = document.getElementById('statusDot');
 if (dot) dot.style.background = '#FFB84D';
+
+// Sound Toggle
+const soundToggleBtn = document.getElementById('soundToggleBtn');
+if (soundToggleBtn) {
+    soundToggleBtn.addEventListener('click', () => {
+        if (window.Sounds) {
+            window.Sounds.enabled = !window.Sounds.enabled;
+            soundToggleBtn.textContent = window.Sounds.enabled ? '🔊' : '🔇';
+        }
+    });
+}
