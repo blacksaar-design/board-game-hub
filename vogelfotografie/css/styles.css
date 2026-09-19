@@ -1345,6 +1345,34 @@ input[type="text"]:focus {
     border-left-color: var(--accent-color);
 }
 
+.final-birds-details {
+    margin-top: 15px;
+    cursor: pointer;
+}
+
+.final-birds-details summary {
+    font-weight: 600;
+    color: var(--primary-light);
+    outline: none;
+    user-select: none;
+}
+
+.final-birds-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: var(--radius-md);
+    justify-content: center;
+}
+
+.final-birds-list .bird-card {
+    width: 130px;
+    pointer-events: none;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .lobby-content {

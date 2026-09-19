@@ -534,11 +534,10 @@ function updateActionButtons() {
         }
     }
 
+    elements.captureAllBtn.style.display = canCaptureAll ? 'block' : 'none';
     elements.captureAllBtn.disabled = !canCaptureAll;
     if (canCaptureAll) {
         elements.captureAllBtn.innerHTML = `<span class="btn-icon">📸✨</span> ${captureCount} Vögel fangen`;
-    } else {
-        elements.captureAllBtn.innerHTML = `<span class="btn-icon">📸✨</span> Alle fotografieren`;
     }
 
     // Attract button visibility (optional, but keep consistent)
