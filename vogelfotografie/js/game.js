@@ -64,9 +64,6 @@ const elements = {
     // Photos Toggle
     togglePhotos: document.getElementById('togglePhotos'),
 
-    // Bot
-    addBotBtn: document.getElementById('addBotBtn'),
-
     // Debug
     boostBtn: document.getElementById('boostBtn'),
 
@@ -78,15 +75,6 @@ const elements = {
 let isPhotoPending = false;
 
 // Event Listeners - Lobby
-if (elements.addBotBtn) {
-    elements.addBotBtn.addEventListener('click', () => {
-        socket.emit('addBot', {}, (response) => {
-            if (!response.success) {
-                UI.showModal('❌', 'Fehler', response.error);
-            }
-        });
-    });
-}
 
 elements.createRoomBtn.addEventListener('click', () => {
     const playerName = elements.createPlayerName.value.trim();
@@ -102,7 +90,6 @@ elements.createRoomBtn.addEventListener('click', () => {
             gameState.roomCode = response.roomCode;
             elements.displayRoomCode.textContent = response.roomCode;
 
-            if (elements.addBotBtn) elements.addBotBtn.style.display = 'inline-block';
             const debugOpts = document.getElementById('debugOptions');
             if (debugOpts) debugOpts.style.display = 'block';
             const rulesEl = document.getElementById('rulesSelection');
@@ -123,8 +110,6 @@ elements.joinRoomBtn.addEventListener('click', () => {
         UI.showModal('⚠️', 'Eingabe unvollständig', 'Bitte gib einen Raum-Code und deinen Namen ein');
         return;
     }
-
-    if (elements.addBotBtn) elements.addBotBtn.style.display = 'none';
 
     socket.emit('joinRoom', { roomCode, playerName }, (response) => {
         if (response.success) {
