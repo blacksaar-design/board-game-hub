@@ -67,6 +67,9 @@ const elements = {
     // Bot
     addBotBtn: document.getElementById('addBotBtn'),
 
+    // Debug
+    boostBtn: document.getElementById('boostBtn'),
+
     // Game Log
     gameLog: document.getElementById('gameLog')
 };
@@ -92,8 +95,6 @@ elements.createRoomBtn.addEventListener('click', () => {
         return;
     }
 
-    if (elements.addBotBtn) elements.addBotBtn.style.display = 'block';
-
     socket.emit('createRoom', playerName, (response) => {
         if (response.success) {
             gameState.playerId = response.playerId;
@@ -101,8 +102,11 @@ elements.createRoomBtn.addEventListener('click', () => {
             gameState.roomCode = response.roomCode;
             elements.displayRoomCode.textContent = response.roomCode;
 
-            // Force show Bot button for Host
-            if (elements.addBotBtn) elements.addBotBtn.style.display = 'block';
+            if (elements.addBotBtn) elements.addBotBtn.style.display = 'inline-block';
+            const debugOpts = document.getElementById('debugOptions');
+            if (debugOpts) debugOpts.style.display = 'block';
+            const rulesEl = document.getElementById('rulesSelection');
+            if (rulesEl) rulesEl.style.display = 'block';
 
             UI.showScreen('waitingScreen');
         } else {
@@ -142,13 +146,36 @@ elements.leaveLobbyBtn.addEventListener('click', () => {
 elements.startGameBtn.addEventListener('click', () => {
     const rulesSelect = document.getElementById('scoringMode');
     const mode = rulesSelect ? rulesSelect.value : 'standard';
+    const npcOnlyCb = document.getElementById('npcOnlyMode');
+    const spectatorMode = npcOnlyCb ? npcOnlyCb.checked : false;
 
-    socket.emit('startGame', { mode }, (response) => {
+    socket.emit('startGame', { mode, spectatorMode }, (response) => {
         if (!response.success) {
             UI.showModal('❌', 'Fehler', response.error);
+        } else if (spectatorMode && elements.boostBtn) {
+            elements.boostBtn.style.display = 'inline-block';
         }
     });
 });
+
+if (elements.boostBtn) {
+    elements.boostBtn.addEventListener('click', () => {
+        window.botSpeedBoost = !window.botSpeedBoost;
+        elements.boostBtn.classList.toggle('btn-primary', window.botSpeedBoost);
+        elements.boostBtn.classList.toggle('btn-secondary', !window.botSpeedBoost);
+        if (window.botSpeedBoost && window.localHost) {
+            window.localHost.botDelay = 50;
+        } else if (window.localHost) {
+            window.localHost.botDelay = 1500;
+        }
+    });
+}
+
+if (elements.newGameBtn) {
+    elements.newGameBtn.addEventListener('click', () => {
+        location.reload();
+    });
+}
 
 // Event Listeners - Game Actions
 elements.sneakBtn.addEventListener('click', () => {

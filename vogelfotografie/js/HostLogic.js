@@ -109,6 +109,16 @@ class VogelfotografieHost {
             this.rules.scoringMode = 'standard';
         }
 
+        if (data && data.spectatorMode) {
+            this.rules.spectatorMode = true;
+            // Convert any humans to legendary bots for this match
+            this.players.forEach(p => {
+                p.isBot = true;
+                if (!p.difficulty) p.difficulty = 'legendary';
+            });
+            this.addToLog('🤖 NPC-Only Modus aktiviert. Lehn dich zurück und schau zu!', 'system-msg');
+        }
+
         // Shuffle cards
         this.gameState.birdDeck = this._shuffle([...this.cards.birds]);
 
@@ -465,7 +475,7 @@ class VogelfotografieHost {
 
         // Trigger Bot Turn if applicable
         if (currentPlayer.isBot) {
-            setTimeout(() => this.playBotTurn(currentPlayer.playerId), 1500);
+            setTimeout(() => this.playBotTurn(currentPlayer.playerId), this.botDelay || 1500);
         }
     }
 
@@ -517,10 +527,10 @@ class VogelfotografieHost {
 
     _playBotTurnLegendary(bot, botId) {
         // Legendary Strategy: "Master of Attraction"
-        // Priority: Use "Attract" (2 insects) to capture high value birds (3+ points) WITHOUT rolling dice.
-        // User confirmed max points is 3. So we target 3s.
+        // Priority: Use "Attract" (2 insects) to capture high value birds WITHOUT rolling dice.
+        // Takes into account Advanced Scoring weighting.
 
-        const highValueBirds = this.gameState.visibleBirds.filter(b => b.prestige_points >= 3);
+        const highValueBirds = this.gameState.visibleBirds.filter(b => this._getEffectivePoints(b, bot) >= 2.5);
 
         for (const bird of highValueBirds) {
             // Do we have 2 insects of the correct type?
@@ -551,9 +561,28 @@ class VogelfotografieHost {
         this._playBotTurnHard(bot, botId);
     }
 
+    _getEffectivePoints(bird, bot) {
+        let base = bird.prestige_points;
+
+        if (this.rules.scoringMode === 'advanced') {
+            // Majority of 1-pointers logic (+1.5 virtual points)
+            if (base === 1) base += 1.5;
+
+            // Set collection logic (+1 virtual point for new insects, +0.5 for dupes)
+            const botInsects = bot.hand.birds.map(b => b.insect_type);
+            if (!botInsects.includes(bird.insect_type)) {
+                base += 1.5; // High priority for unique types (4-Sets)
+            } else {
+                base += 0.5; // Low priority (counts towards 3-Sets)
+            }
+        }
+
+        return base;
+    }
+
     _playBotTurnHard(bot, botId) {
         // Hard Bot Strategy: Expected Value Maximization
-        // 1. Calculate EV for every visible bird (Score * Probability of Capture)
+        // 1. Calculate EV for every visible bird (Adjusted Score * Probability of Capture)
         // 2. Consider "Attract" if all EVs are low.
 
         const distance = this.gameState.currentDistance;
@@ -565,7 +594,8 @@ class VogelfotografieHost {
 
         this.gameState.visibleBirds.forEach(bird => {
             const prob = this._calculateCaptureProbability(bird, distance, bot.hand.insects);
-            const ev = bird.prestige_points * prob;
+            const pts = this._getEffectivePoints(bird, bot);
+            const ev = pts * prob;
 
             if (ev > maxEV) {
                 maxEV = ev;
@@ -585,20 +615,16 @@ class VogelfotografieHost {
 
         // Decision: Sneak vs Photo
         // Compare EV of Photo Now vs EV of Sneak (Success chance * EV at next distance)
+        const bestPts = this._getEffectivePoints(bestBird, bot);
         const photoProb = this._calculateCaptureProbability(bestBird, distance, bot.hand.insects);
-        const photoEV = bestBird.prestige_points * photoProb;
+        const photoEV = bestPts * photoProb;
 
         // Estimate Sneak EV
         // Sneak success = 4/6 = 0.66
-        // Next distance EV roughly estimated (simplified)
-        // If dist=2, next is max, so Sneak EV is 0.
-        // If dist<2, next dist prob is likely higher.
-
         let sneakEV = 0;
         if (distance < 2) {
             const nextDistProb = this._calculateCaptureProbability(bestBird, distance + 1, bot.hand.insects);
-            sneakEV = 0.66 * (bestBird.prestige_points * nextDistProb);
-            // Discount slightly for turn delay? No, keep it simple.
+            sneakEV = 0.66 * (bestPts * nextDistProb);
         }
 
         console.log(`[Host] Bot ${bot.playerName} Analysis: BestBird=${bestBird.name}, PhotoEV=${photoEV.toFixed(2)}, SneakEV=${sneakEV.toFixed(2)}`);
@@ -774,7 +800,7 @@ class VogelfotografieHost {
             if (res.success) {
                 this.handleSneak(bird.id, false, null, botId, (res) => {
                     if (res.success && res.result === 'success') {
-                        setTimeout(() => this.playBotTurn(botId), 1500);
+                        setTimeout(() => this.playBotTurn(botId), this.botDelay || 1500);
                     } else if (res.success) {
                         // Sneak failed (scared) or other result - handled inside handleSneak (nextTurn)
                     } else {
@@ -807,7 +833,7 @@ class VogelfotografieHost {
                                 this.handleApplyBonus(insect.id, botId, (res) => {
                                     setTimeout(() => {
                                         this.handleResolvePhoto(botId, (res) => { });
-                                    }, 1500);
+                                    }, this.botDelay || 1500);
                                 });
                                 return;
                             }
@@ -815,7 +841,7 @@ class VogelfotografieHost {
 
                         setTimeout(() => {
                             this.handleResolvePhoto(botId, (res) => { });
-                        }, 1500);
+                        }, this.botDelay || 1500);
                     } else {
                         console.error(`[Host] Bot ${bot.playerName} Photo Roll failed:`, rollResult.error);
                         this.nextTurn();

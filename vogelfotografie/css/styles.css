@@ -1414,6 +1414,11 @@ input[type="text"]:focus {
         margin-bottom: var(--spacing-sm);
     }
 
+    .captured-birds-container:not(.collapsed) {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
     .player-card {
         padding: var(--spacing-xs);
         font-size: 0.8rem;
