@@ -660,25 +660,14 @@ class VogelfotografieHost {
     }
 
     _calculateCaptureProbability(bird, distance, insects) {
-        // 1. Get requirements
-        let req;
-        if (distance === 0) req = bird.distance_far_dice;
-        if (distance === 1) req = bird.distance_mid_dice;
-        if (distance === 2) req = bird.distance_near_dice;
-        if (!req) return 0;
-
-        // 2. Base Probability (Dice only)
+        // We simulate all 6 dice rolls to see how many win.
         let winningRolls = 0;
-
-        // 3. Insect Boost
-        // How many rolls can be FIXED by our insects?
-        // We simulate all 6 dice rolls.
 
         for (let roll = 1; roll <= 6; roll++) {
             let success = false;
 
-            // Check raw roll
-            if (this._checkRollMatch(roll, req)) {
+            // Check raw roll using the real success logic (which includes cumulative distance rules!)
+            if (this._checkPhotoSuccess(roll, bird, distance)) {
                 success = true;
             } else {
                 // Check if any insect fixes it
@@ -688,7 +677,7 @@ class VogelfotografieHost {
                     if (insect.bonus_action === 'decrease') mod = Math.max(1, roll - 1);
                     if (insect.bonus_action === 'flip') mod = 7 - roll;
 
-                    if (this._checkRollMatch(mod, req)) {
+                    if (this._checkPhotoSuccess(mod, bird, distance)) {
                         success = true;
                         break; // Found a fix
                     }
@@ -701,14 +690,6 @@ class VogelfotografieHost {
         return winningRolls / 6.0;
     }
 
-    _checkRollMatch(val, req) {
-        if (req.includes('-')) {
-            const [min, max] = req.split('-').map(Number);
-            return val >= min && val <= max;
-        } else {
-            return val === parseInt(req);
-        }
-    }
 
     _playBotTurnEasy(bot, botId) {
         const bird = this.gameState.visibleBirds[0];
