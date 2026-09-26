@@ -530,7 +530,12 @@ class VogelfotografieHost {
         // Priority: Use "Attract" (2 insects) to capture high value birds WITHOUT rolling dice.
         // Takes into account Advanced Scoring weighting.
 
-        const highValueBirds = this.gameState.visibleBirds.filter(b => this._getEffectivePoints(b, bot) >= 2.5);
+        const deckIsNearlyEmpty = this.gameState.birdDeck.length < 10;
+        const highValueBirds = this.gameState.visibleBirds.filter(b => {
+            // Never attract 1-point birds in early/mid game — too expensive
+            if (b.prestige_points <= 1 && !deckIsNearlyEmpty) return false;
+            return this._getEffectivePoints(b, bot) >= 2.5;
+        });
 
         for (const bird of highValueBirds) {
             // Do we have 2 insects of the correct type?
@@ -539,12 +544,6 @@ class VogelfotografieHost {
             if (matchingInsects.length >= 2) {
                 console.log(`[Host] Bot ${bot.playerName} (Legendary) uses Smart Attract on ${bird.name}!`);
                 const insectIds = matchingInsects.slice(0, 2).map(i => i.id);
-
-                // Use Attract to capture immediately
-                // Note: handleAttract expects "birdId" (to capture) and "insectIds" (payment).
-                // Wait, handleAttract logic in HostLogic.js:
-                // "if (usedInsects.length === 2 && allCorrectType) { ... player.hand.birds.push(bird); ... }"
-                // Yes, it captures the bird.
 
                 this.handleSelectBird(bird.id, botId, (res) => {
                     if (res.success) {
@@ -556,6 +555,7 @@ class VogelfotografieHost {
                 return;
             }
         }
+
 
         // Step 2: Fallback to Hard Logic (EV Maximization)
         this._playBotTurnHard(bot, botId);
