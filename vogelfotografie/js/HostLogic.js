@@ -800,9 +800,15 @@ class VogelfotografieHost {
             if (res.success) {
                 this.handleSneak(bird.id, false, null, botId, (res) => {
                     if (res.success && res.result === 'success') {
-                        setTimeout(() => this.playBotTurn(botId), this.botDelay || 1500);
+                        // After sneak success we must photograph the SAME bird at the new distance.
+                        // Re-entering playBotTurn would re-evaluate and could pick a different bird,
+                        // causing handleSelectBird's lock check to fail and skip the photo.
+                        const newDistance = this.gameState.currentDistance;
+                        setTimeout(() => {
+                            this._botTakePhoto(bot, botId, bird, newDistance, true);
+                        }, this.botDelay || 1500);
                     } else if (res.success) {
-                        // Sneak failed (scared) or other result - handled inside handleSneak (nextTurn)
+                        // 'scared' result — bird flew away, nextTurn already called inside handleSneak
                     } else {
                         console.error(`[Host] Bot ${bot.playerName} Sneak failed:`, res.error);
                         this.nextTurn();
@@ -814,6 +820,7 @@ class VogelfotografieHost {
             }
         });
     }
+
 
     _botTakePhoto(bot, botId, bird, distance, useItems) {
         console.log(`[Host] Bot ${bot.playerName} selects and takes a photo of ${bird.name}!`);
