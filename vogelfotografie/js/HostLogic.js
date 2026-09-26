@@ -630,32 +630,30 @@ class VogelfotografieHost {
         }
 
         // Decision: Sneak vs Photo
-        // Compare EV of Photo Now vs EV of Sneak (Success chance * EV at next distance)
         const bestPts = this._getEffectivePoints(bestBird, bot);
         const photoProb = this._calculateCaptureProbability(bestBird, distance, bot.hand.insects);
         const photoEV = bestPts * photoProb;
 
-        // Estimate Sneak EV
-        // Sneak success = 4/6 = 0.66
-        let sneakEV = 0;
-        if (distance < 2) {
-            const nextDistProb = this._calculateCaptureProbability(bestBird, distance + 1, bot.hand.insects);
-            sneakEV = 0.66 * (bestPts * nextDistProb);
+        // Evaluate all future sneak stopping points
+        let bestSneakEV = 0;
+        let cumulativeSurviveProb = 1.0;
+        const SNEAK_SUCCESS_RATE = 0.666; // 4/6
+
+        for (let d = distance + 1; d <= 2; d++) {
+            cumulativeSurviveProb *= SNEAK_SUCCESS_RATE;
+            const probAtD = this._calculateCaptureProbability(bestBird, d, bot.hand.insects);
+            const evAtD = cumulativeSurviveProb * bestPts * probAtD;
+            if (evAtD > bestSneakEV) {
+                bestSneakEV = evAtD;
+            }
         }
 
-        console.log(`[Host] Bot ${bot.playerName} Analysis: BestBird=${bestBird.name}, PhotoEV=${photoEV.toFixed(2)}, SneakEV=${sneakEV.toFixed(2)}`);
+        console.log(`[Host] Bot ${bot.playerName} Analysis: BestBird=${bestBird.name}, PhotoEV=${photoEV.toFixed(2)}, BestSneakEV=${bestSneakEV.toFixed(2)}`);
 
-        if (photoEV >= sneakEV && photoProb > 0.3) {
-            // Take Photo if better EV and at least decent chance (don't waste turn on 5% yolo unless sneak is worse)
+        if (distance === 2 || photoEV >= bestSneakEV) {
             this._botTakePhoto(bot, botId, bestBird, distance, true);
         } else {
-            // If sneak is better, or photo is terrible
-            // But if dist=2, we MUST photo (sneakEV is 0).
-            if (distance === 2) {
-                this._botTakePhoto(bot, botId, bestBird, distance, true);
-            } else {
-                this._botSneak(bot, botId, bestBird);
-            }
+            this._botSneak(bot, botId, bestBird);
         }
     }
 
