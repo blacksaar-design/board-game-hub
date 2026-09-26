@@ -531,15 +531,27 @@ class VogelfotografieHost {
         // Takes into account Advanced Scoring weighting.
 
         const deckIsNearlyEmpty = this.gameState.birdDeck.length < 10;
-        const capturedInsectTypes = new Set(bot.hand.birds.map(b => b.insect_type));
+        const capturedInsectTypes = bot.hand.birds.map(b => b.insect_type);
+        const uniqueTypes = new Set(capturedInsectTypes);
+
+        const _wouldCompleteSet = (bird) => {
+            const type = bird.insect_type;
+            // Completes a 4-Set: bot already has exactly 3 different insect types and this is the 4th
+            if (uniqueTypes.size === 3 && !uniqueTypes.has(type)) return true;
+            // Completes a 3-Same-Set: bot already has exactly 2 of this type
+            const countOfType = capturedInsectTypes.filter(t => t === type).length;
+            if (countOfType === 2) return true;
+            return false;
+        };
+
         const highValueBirds = this.gameState.visibleBirds.filter(b => {
             if (b.prestige_points <= 1 && !deckIsNearlyEmpty) {
-                // Exception: allow if this insect type is new → advances a 4-Set
-                if (!capturedInsectTypes.has(b.insect_type)) return true;
-                return false;
+                // Only allow if this bird actually completes a scoring set
+                return _wouldCompleteSet(b);
             }
             return this._getEffectivePoints(b, bot) >= 2.5;
         });
+
 
         for (const bird of highValueBirds) {
             // Do we have 2 insects of the correct type?
