@@ -531,9 +531,13 @@ class VogelfotografieHost {
         // Takes into account Advanced Scoring weighting.
 
         const deckIsNearlyEmpty = this.gameState.birdDeck.length < 10;
+        const capturedInsectTypes = new Set(bot.hand.birds.map(b => b.insect_type));
         const highValueBirds = this.gameState.visibleBirds.filter(b => {
-            // Never attract 1-point birds in early/mid game — too expensive
-            if (b.prestige_points <= 1 && !deckIsNearlyEmpty) return false;
+            if (b.prestige_points <= 1 && !deckIsNearlyEmpty) {
+                // Exception: allow if this insect type is new → advances a 4-Set
+                if (!capturedInsectTypes.has(b.insect_type)) return true;
+                return false;
+            }
             return this._getEffectivePoints(b, bot) >= 2.5;
         });
 
