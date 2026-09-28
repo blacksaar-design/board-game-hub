@@ -143,6 +143,19 @@ elements.startGameBtn.addEventListener('click', () => {
     });
 });
 
+const startChallengeBtn = document.getElementById('startChallengeBtn');
+if (startChallengeBtn) {
+    startChallengeBtn.addEventListener('click', () => {
+        window.Challenge.Manager.start();
+        socket.emit('startGame', { spectatorMode: false, automaMode: 'master', isChallenge: true }, (response) => {
+            if (!response.success) {
+                UI.showModal('❌', 'Fehler', response.error);
+                window.Challenge.Manager.abort();
+            }
+        });
+    });
+}
+
 if (elements.boostBtn) {
     elements.boostBtn.addEventListener('click', () => {
         window.botSpeedBoost = !window.botSpeedBoost;
@@ -395,13 +408,89 @@ socket.on('gameEnded', (data) => {
     data.finalScores.sort((a, b) => b.score - a.score).forEach(player => {
         elements.finalScores.appendChild(UI.createFinalScoreItem(player, player.playerId === winnerId));
     });
-    UI.showScreen('endScreen');
+
+    if (window.Challenge && window.Challenge.Manager.active) {
+        handleChallengeEval(data.finalScores);
+    } else {
+        UI.showScreen('endScreen');
+    }
 });
+
+function handleChallengeEval(finalScores) {
+    const mgr = window.Challenge.Manager;
+    const { metGoals, beatAutoma } = mgr.evaluateGame(finalScores);
+
+    if (!beatAutoma) {
+        showChallengeFail('Niederlage!', 'Du konntest den Automa in diesem Spiel nicht schlagen. Die Herausforderung ist gescheitert.');
+        mgr.abort();
+    } else if (metGoals.length === 0) {
+        showChallengeFail('Kein Ziel erreicht!', 'Du hast zwar gewonnen, aber keines der verbleibenden Ziele erfüllt. Die Herausforderung ist gescheitert.');
+        mgr.abort();
+    } else if (metGoals.length === 1) {
+        // Automatically check off that goal
+        mgr.completeGoal(metGoals[0].id);
+        if (mgr.isComplete()) {
+            showChallengeFail('🏆 LEGENDÄR 🏆', 'DU HAST 4 SPIELE IN FOLGE GEWONNEN UND ALLE ZIELE ERFÜLLT! Du bist der König der Vogelfotografie!');
+        } else {
+            // Just return to standard screen, banner will have updated
+            UI.showScreen('endScreen');
+        }
+    } else {
+        // Need to choose a goal
+        showGoalSelection(metGoals, () => {
+            if (mgr.isComplete()) {
+                showChallengeFail('🏆 LEGENDÄR 🏆', 'DU HAST 4 SPIELE IN FOLGE GEWONNEN UND ALLE ZIELE ERFÜLLT! Du bist der König der Vogelfotografie!');
+            } else {
+                UI.showScreen('endScreen');
+            }
+        });
+    }
+}
+
+function showChallengeFail(title, text) {
+    document.getElementById('challengeOverlayTitle').textContent = title;
+    document.getElementById('challengeOverlayText').textContent = text;
+    document.getElementById('challengeOverlaySlots').innerHTML = ''; // maybe show past progress?
+    const overlay = document.getElementById('challengeOverlay');
+    overlay.style.display = 'flex';
+
+    document.getElementById('challengeOverlayCloseBtn').onclick = () => {
+        overlay.style.display = 'none';
+        UI.showScreen('endScreen');
+    };
+}
+
+function showGoalSelection(goals, onComplete) {
+    const list = document.getElementById('goalSelectionList');
+    list.innerHTML = '';
+
+    goals.forEach(g => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary';
+        btn.style.textAlign = 'left';
+        btn.innerHTML = `<span style="font-size:1.5rem">${g.icon}</span> <b>${g.title}</b><br><small>${g.description}</small>`;
+        btn.onclick = () => {
+            window.Challenge.Manager.completeGoal(g.id);
+            document.getElementById('goalSelectionModal').style.display = 'none';
+            onComplete();
+        };
+        list.appendChild(btn);
+    });
+
+    document.getElementById('goalSelectionModal').style.display = 'flex';
+}
 
 // Helper Functions
 function updateGameState(state) {
     const prevPlayerIndex = gameState.currentPlayerIndex;
     Object.assign(gameState, state);
+
+    if (window.Challenge && window.Challenge.Manager.active) {
+        updateChallengeBanner();
+    } else {
+        const banner = document.getElementById('challengeBanner');
+        if (banner) banner.style.display = 'none';
+    }
 
     // Play new-turn sound when the active player changes
     if (typeof prevPlayerIndex === 'number' && state.currentPlayerIndex !== prevPlayerIndex) {
@@ -569,4 +658,49 @@ if (soundToggleBtn) {
             soundToggleBtn.textContent = window.Sounds.enabled ? '🔊' : '🔇';
         }
     });
+}
+
+function updateChallengeBanner() {
+    const banner = document.getElementById('challengeBanner');
+    const slotsObj = document.getElementById('challengeSlots');
+    if (!banner || !slotsObj || !window.Challenge) return;
+
+    banner.style.display = 'flex';
+    slotsObj.innerHTML = '';
+
+    const mgr = window.Challenge.Manager;
+    const completedCount = mgr.completedGoalIds.length;
+
+    for (let i = 0; i < 4; i++) {
+        const slot = document.createElement('div');
+        slot.style.width = '24px';
+        slot.style.height = '24px';
+        slot.style.borderRadius = '50%';
+        slot.style.border = '2px solid #FFB84D';
+        slot.style.display = 'flex';
+        slot.style.alignItems = 'center';
+        slot.style.justifyContent = 'center';
+        slot.style.fontSize = '0.7rem';
+        slot.style.fontWeight = '700';
+        slot.style.color = '#fff';
+
+        if (i < completedCount) {
+            // Completed
+            slot.style.background = '#FFB84D';
+            slot.style.color = '#111';
+            slot.textContent = '✓';
+        } else if (i === completedCount) {
+            // Current
+            slot.style.background = 'rgba(255, 184, 77, 0.2)';
+            slot.textContent = (i + 1).toString();
+        } else {
+            // Future
+            slot.style.background = 'transparent';
+            slot.style.borderColor = '#555';
+            slot.style.color = '#555';
+            slot.textContent = (i + 1).toString();
+        }
+
+        slotsObj.appendChild(slot);
+    }
 }

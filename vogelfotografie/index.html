@@ -87,12 +87,22 @@
             </div>
 
             <button id="startGameBtn" class="btn btn-primary btn-large">Spiel starten</button>
+            <button id="startChallengeBtn" class="btn btn-secondary"
+                style="margin-top: 10px; width: 100%; font-weight: 700; background: linear-gradient(135deg, #FFB84D, #ff9a00); color: #222; border: none; box-shadow: 0 4px 15px rgba(255, 184, 77, 0.4);">🏆
+                Herausforderung starten 🏆</button>
             <button id="leaveLobbyBtn" class="btn btn-ghost">Raum verlassen</button>
         </div>
     </div>
 
     <!-- Game Screen -->
     <div id="gameScreen" class="screen">
+        <div id="challengeBanner" class="challenge-banner"
+            style="display: none; background: linear-gradient(90deg, #1A1A1D, #2D2A26); padding: 12px; display: flex; align-items: center; justify-content: center; gap: 12px; border-bottom: 2px solid #FFB84D; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+            <div
+                style="font-size: 0.85rem; font-weight: 700; color: #FFB84D; text-transform: uppercase; letter-spacing: 1px;">
+                Herausforderung</div>
+            <div id="challengeSlots" style="display: flex; gap: 8px;"></div>
+        </div>
         <div class="game-layout">
             <div class="game-container">
                 <div class="game-header">
@@ -216,6 +226,40 @@
         </div>
     </div>
 
+    <!-- Goal Selection Modal -->
+    <div id="goalSelectionModal" class="modal" style="display: none; z-index: 3000;">
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <div class="modal-header">
+                <h2>🎯 Ziele erreicht!</h2>
+            </div>
+            <div class="modal-body">
+                <p>Du hast mehrere Zielen gleichzeitig erfüllt! Bitte wähle <strong
+                        style="color:var(--primary-color)">ein</strong> Ziel aus, das abgehakt werden soll:</p>
+                <div id="goalSelectionList" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Challenge Overlay (Success/Fail) -->
+    <div id="challengeOverlay" class="modal"
+        style="display: none; z-index: 4000; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);">
+        <div class="modal-content"
+            style="max-width: 500px; text-align: center; border: 2px solid var(--primary-color);">
+            <div class="modal-header">
+                <h2 id="challengeOverlayTitle" style="font-size: 2rem;"></h2>
+            </div>
+            <div class="modal-body" style="font-size: 1.1rem; line-height: 1.5; color: #ddd;">
+                <p id="challengeOverlayText"></p>
+                <div id="challengeOverlaySlots"
+                    style="display: flex; justify-content: center; gap: 10px; margin: 20px 0; font-size: 1.5rem;"></div>
+            </div>
+            <div class="modal-footer" style="margin-top: 20px;">
+                <button id="challengeOverlayCloseBtn" class="btn btn-primary btn-large">Verstanden</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal for notifications -->
     <div id="modal" class="modal">
         <div class="modal-content">
@@ -227,6 +271,7 @@
     </div>
 
     <script src="js/SoundManager.js?v=1"></script>
+    <script src="js/challenge.js?v=1"></script>
     <script src="js/HostLogic.js?v=12"></script>
     <script src="js/SocketBridge.js?v=12"></script>
     <script src="js/components.js?v=12"></script>
