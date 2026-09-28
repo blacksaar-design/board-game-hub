@@ -131,28 +131,6 @@ function createFinalScoreItem(player, isWinner = false) {
             </div>
             ${birdsDetailsHtml}
         `;
-    } else if (b) {
-        item.innerHTML = `
-            <div class="final-score-main">
-                <span>${isWinner ? '🏆 ' : ''}${player.playerName}</span>
-                <span>${player.score} Punkte</span>
-            </div>
-            <div class="final-score-breakdown">
-                <span>1er: ${b.counts.p1} (${b.p1}P)</span>
-                <span>2er: ${b.counts.p2} (${b.p2}P)</span>
-                <span>3er: ${b.counts.p3} (${b.p3}P)</span>
-                <span class="bonus-tag">Bonus: +${b.bonus}</span>
-            </div>
-            ${birdsDetailsHtml}
-        `;
-    } else {
-        item.innerHTML = `
-            <div class="final-score-main">
-                <span>${isWinner ? '🏆 ' : ''}${player.playerName}</span>
-                <span>${player.score} Punkte</span>
-            </div>
-            ${birdsDetailsHtml}
-        `;
     }
 
     if (player.birds && player.birds.length > 0) {

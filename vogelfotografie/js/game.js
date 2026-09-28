@@ -129,14 +129,12 @@ elements.leaveLobbyBtn.addEventListener('click', () => {
 });
 
 elements.startGameBtn.addEventListener('click', () => {
-    const rulesSelect = document.getElementById('scoringMode');
-    const mode = rulesSelect ? rulesSelect.value : 'standard';
     const npcOnlyCb = document.getElementById('npcOnlyMode');
     const spectatorMode = npcOnlyCb ? npcOnlyCb.checked : false;
     const automaModeCombo = document.getElementById('automaMode');
     const automaMode = automaModeCombo ? automaModeCombo.value : 'none';
 
-    socket.emit('startGame', { mode, spectatorMode, automaMode }, (response) => {
+    socket.emit('startGame', { spectatorMode, automaMode }, (response) => {
         if (!response.success) {
             UI.showModal('❌', 'Fehler', response.error);
         } else if (spectatorMode && elements.boostBtn) {
