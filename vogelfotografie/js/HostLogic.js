@@ -108,10 +108,12 @@ class VogelfotografieHost {
         } else {
             this.rules.scoringMode = 'standard';
         }
+
         this.rules.automaMode = data ? (data.automaMode || 'none') : 'none';
         if (this.rules.automaMode !== 'none') {
-            this.gameState.automa = { score: 0, birds: 0 };
-            this.addToLog(`🤖 Automa-Modus (${this.rules.automaMode}) aktiviert.`, 'system-msg');
+            this.rules.scoringMode = 'advanced'; // Force advanced scoring
+            this.gameState.automa = { score: 0, birds: [] };
+            this.addToLog(`🤖 Automa-Modus (${this.rules.automaMode}) aktiviert. Erweitertes Wertungssystem aktiviert.`, 'system-msg');
         }
 
         if (data && data.spectatorMode) {
@@ -126,6 +128,17 @@ class VogelfotografieHost {
 
         // Shuffle cards
         this.gameState.birdDeck = this._shuffle([...this.cards.birds]);
+
+        if (this.rules.automaMode !== 'none') {
+            let rem1 = 10, rem2 = 5, rem3 = 5;
+            this.gameState.birdDeck = this.gameState.birdDeck.filter(b => {
+                if (b.prestige_points === 1 && rem1 > 0) { rem1--; return false; }
+                if (b.prestige_points === 2 && rem2 > 0) { rem2--; return false; }
+                if (b.prestige_points === 3 && rem3 > 0) { rem3--; return false; }
+                return true;
+            });
+            this.addToLog('ℹ️ 20 Vögel (10x1P, 5x2P, 5x3P) wurden für den Solomodus aus dem Stapel entfernt.', 'system-msg');
+        }
 
         // Insect Deck Scaling:
         // 1 Player: IDs 1-32 (32 cards)
@@ -948,8 +961,19 @@ class VogelfotografieHost {
         this.gameState.status = 'finished';
         this.addToLog(`🏆 Das Spiel ist beendet!`, 'turn');
 
+        const playersToScore = [...this.players];
+        if (this.rules.automaMode && this.rules.automaMode !== 'none') {
+            playersToScore.push({
+                playerId: 'automa',
+                playerName: `🤖 Automa`,
+                score: this.gameState.automa.score,
+                hand: { birds: this.gameState.automa.birds, insects: [] },
+                isAutoma: true
+            });
+        }
+
         // Pre-calculate base stats
-        const stats = this.players.map(p => {
+        const stats = playersToScore.map(p => {
             const birds = p.hand.birds;
             const p1 = birds.filter(b => b.prestige_points === 1).length;
             const p2 = birds.filter(b => b.prestige_points === 2).length;
@@ -959,7 +983,7 @@ class VogelfotografieHost {
 
         if (this.rules.scoringMode === 'advanced') {
             // Majority logic (1P birds)
-            const pc = this.players.length;
+            const pc = playersToScore.length;
             const majorityPoints = pc >= 4 ? [5, 3, 1, 0] : (pc === 3 ? [5, 3, 0] : [5, 0]);
 
             const grouped = {};
@@ -1051,23 +1075,8 @@ class VogelfotografieHost {
                 };
             }
         });
-
-        if (this.rules.automaMode && this.rules.automaMode !== 'none') {
-            finalScores.push({
-                playerId: 'automa',
-                playerName: `🤖 Automa`,
-                score: this.gameState.automa.score,
-                birds: [],
-                breakdown: {
-                    p1: 0, p2: 0, p3: this.gameState.automa.score, // All points summarized
-                    bonus: 0,
-                    counts: { p1: 0, p2: 0, p3: this.gameState.automa.birds },
-                    advanced: this.rules.scoringMode === 'advanced' ? { majority: 0, s3: 0, s4: 0 } : undefined
-                }
-            });
-            // Sort to ensure highest score is at top since we pushed Automa at the end
-            finalScores.sort((a, b) => b.score - a.score);
-        }
+        // Sort by total score
+        finalScores.sort((a, b) => b.score - a.score);
 
         this.bridge.broadcast('gameEnded', { finalScores, mode: this.rules.scoringMode });
     }
