@@ -150,7 +150,7 @@ if (startChallengeBtn) {
         const automaMode = automaModeCombo ? automaModeCombo.value : 'master';
 
         if (automaMode === 'none') {
-            UI.showModal('⚠️', 'Kein Automa ausgewählt', 'Bitte wähle im Dropdown-Menü darüber einen Automa-Schwierigkeitsgrad (Fortgeschritten, Lehrer oder Meister) aus, gegen den du in der Herausforderung antreten willst.');
+            UI.showModal('⚠️', 'Kein Automa ausgewählt', 'Bitte wähle im Dropdown-Menü darüber einen Automa-Schwierigkeitsgrad (Lehrer oder Meister) aus, gegen den du in der Herausforderung antreten willst.');
             return;
         }
 

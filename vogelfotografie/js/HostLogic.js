@@ -735,24 +735,23 @@ class VogelfotografieHost {
 
         // 2. Check difficulty probability
         if (this.rules.automaMode === 'master') {
-            captureSuccess = true;
-            this.addToLog(`🔴 Automa (Meister) schnappt sich direkt den ${targetBird.name}!`, 'fail');
-        } else if (this.rules.automaMode === 'teacher') {
+            // Was 'teacher' logic
             const roll = Math.floor(Math.random() * 6);
             if (roll < 4) { // Blank: no bird symbol
                 captureSuccess = true;
-                this.addToLog(`🔴 Automa (Lehrer) würfelt Blank und stiehlt den ${targetBird.name}!`, 'fail');
+                this.addToLog(`🔴 Automa (Meister) würfelt Blank und stiehlt den ${targetBird.name}!`, 'fail');
             } else {
-                this.addToLog(`🟢 Automa (Lehrer) würfelt Vogel-Symbol... Der ${targetBird.name} bleibt da.`, 'success');
+                this.addToLog(`🟢 Automa (Meister) würfelt Vogel-Symbol... Der ${targetBird.name} bleibt da.`, 'success');
             }
-        } else if (this.rules.automaMode === 'advanced') {
+        } else if (this.rules.automaMode === 'teacher') {
+            // Was 'advanced' logic
             const roll1 = Math.floor(Math.random() * 6);
             const roll2 = Math.floor(Math.random() * 6);
             if (roll1 < 4 && roll2 < 4) {
                 captureSuccess = true;
-                this.addToLog(`🔴 Automa (Fortgeschritten) würfelt 2x Blank und stiehlt den ${targetBird.name}!`, 'fail');
+                this.addToLog(`🔴 Automa (Lehrer) würfelt 2x Blank und stiehlt den ${targetBird.name}!`, 'fail');
             } else {
-                this.addToLog(`🟢 Automa (Fortgeschritten) würfelt Vogel-Symbol... Der ${targetBird.name} bleibt da.`, 'success');
+                this.addToLog(`🟢 Automa (Lehrer) würfelt Vogel-Symbol... Der ${targetBird.name} bleibt da.`, 'success');
             }
         }
 
