@@ -108,6 +108,11 @@ class VogelfotografieHost {
         } else {
             this.rules.scoringMode = 'standard';
         }
+        this.rules.automaMode = data ? (data.automaMode || 'none') : 'none';
+        if (this.rules.automaMode !== 'none') {
+            this.gameState.automa = { score: 0, birds: 0 };
+            this.addToLog(`🤖 Automa-Modus (${this.rules.automaMode}) aktiviert.`, 'system-msg');
+        }
 
         if (data && data.spectatorMode) {
             this.rules.spectatorMode = true;
@@ -452,6 +457,16 @@ class VogelfotografieHost {
     }
 
     nextTurn() {
+        if (this.rules.automaMode !== 'none' && this.players.length === 1 && !this.gameState.isAutomaTurn) {
+            this.gameState.isAutomaTurn = true;
+            this.gameState.currentDistance = 0;
+            this.gameState.currentBirdId = null;
+            this.updateClients();
+            setTimeout(() => this._playAutomaTurn(), this.botDelay || 1500);
+            return;
+        }
+
+        this.gameState.isAutomaTurn = false;
         this.gameState.currentPlayerIndex = (this.gameState.currentPlayerIndex + 1) % this.players.length;
         this.gameState.currentDistance = 0;
         this.gameState.currentBirdId = null;
@@ -688,6 +703,61 @@ class VogelfotografieHost {
         return winningRolls / 6.0;
     }
 
+    _playAutomaTurn() {
+        this.addToLog('🤖 Der Automa ist am Zug...', 'system-msg');
+
+        if (this.gameState.visibleBirds.length === 0) {
+            this.nextTurn();
+            return;
+        }
+
+        // 1. Roll to select bird (1-2 Left, 3-4 Mid, 5-6 Right)
+        const targetRoll = Math.floor(Math.random() * 6) + 1; // 1-6
+        let targetIndex = 0;
+        if (targetRoll === 3 || targetRoll === 4) targetIndex = 1;
+        if (targetRoll >= 5) targetIndex = 2;
+
+        // Fallback if slot is empty (e.g. <3 birds left)
+        if (!this.gameState.visibleBirds[targetIndex]) {
+            targetIndex = this.gameState.visibleBirds.length - 1;
+        }
+
+        const targetBird = this.gameState.visibleBirds[targetIndex];
+        let captureSuccess = false;
+
+        // 2. Check difficulty probability
+        if (this.rules.automaMode === 'master') {
+            captureSuccess = true;
+            this.addToLog(`🔴 Automa (Meister) schnappt sich direkt den ${targetBird.name}!`, 'fail');
+        } else if (this.rules.automaMode === 'teacher') {
+            const roll = Math.floor(Math.random() * 6);
+            if (roll < 4) { // Blank: no bird symbol
+                captureSuccess = true;
+                this.addToLog(`🔴 Automa (Lehrer) würfelt Blank und stiehlt den ${targetBird.name}!`, 'fail');
+            } else {
+                this.addToLog(`🟢 Automa (Lehrer) würfelt Vogel-Symbol... Der ${targetBird.name} bleibt da.`, 'success');
+            }
+        } else if (this.rules.automaMode === 'advanced') {
+            const roll1 = Math.floor(Math.random() * 6);
+            const roll2 = Math.floor(Math.random() * 6);
+            if (roll1 < 4 && roll2 < 4) {
+                captureSuccess = true;
+                this.addToLog(`🔴 Automa (Fortgeschritten) würfelt 2x Blank und stiehlt den ${targetBird.name}!`, 'fail');
+            } else {
+                this.addToLog(`🟢 Automa (Fortgeschritten) würfelt Vogel-Symbol... Der ${targetBird.name} bleibt da.`, 'success');
+            }
+        }
+
+        if (captureSuccess) {
+            this.gameState.automa.score += targetBird.prestige_points;
+            this.gameState.automa.birds += 1;
+            this.gameState.birdDiscard.push(targetBird.id);
+            this._replaceBird(targetBird.id);
+        }
+
+        this.updateClients();
+        setTimeout(() => this.nextTurn(), 1500);
+    }
 
     _playBotTurnEasy(bot, botId) {
         const bird = this.gameState.visibleBirds[0];
@@ -979,6 +1049,23 @@ class VogelfotografieHost {
                 };
             }
         });
+
+        if (this.rules.automaMode && this.rules.automaMode !== 'none') {
+            finalScores.push({
+                playerId: 'automa',
+                playerName: `🤖 Automa`,
+                score: this.gameState.automa.score,
+                birds: [],
+                breakdown: {
+                    p1: 0, p2: 0, p3: this.gameState.automa.score, // All points summarized
+                    bonus: 0,
+                    counts: { p1: 0, p2: 0, p3: this.gameState.automa.birds },
+                    advanced: this.rules.scoringMode === 'advanced' ? { majority: 0, s3: 0, s4: 0 } : undefined
+                }
+            });
+            // Sort to ensure highest score is at top since we pushed Automa at the end
+            finalScores.sort((a, b) => b.score - a.score);
+        }
 
         this.bridge.broadcast('gameEnded', { finalScores, mode: this.rules.scoringMode });
     }
