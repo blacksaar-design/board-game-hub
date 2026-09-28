@@ -106,8 +106,9 @@ class VogelfotografieHost {
 
         this.rules.automaMode = data ? (data.automaMode || 'none') : 'none';
         if (this.rules.automaMode !== 'none') {
+            const modeName = this.rules.automaMode === 'master' ? 'Meister' : (this.rules.automaMode === 'teacher' ? 'Lehrer' : this.rules.automaMode);
             this.gameState.automa = { score: 0, birds: [] };
-            this.addToLog(`🤖 Automa-Modus (${this.rules.automaMode}) aktiviert.`, 'system-msg');
+            this.addToLog(`🤖 Automa-Modus (${modeName}) aktiviert.`, 'system-msg');
         }
 
         if (data && data.spectatorMode) {
