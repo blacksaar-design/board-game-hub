@@ -123,16 +123,17 @@ class VogelfotografieHost {
         // Shuffle cards
         this.gameState.birdDeck = this._shuffle([...this.cards.birds]);
 
-        if (this.rules.automaMode !== 'none') {
-            let rem1 = 10, rem2 = 5, rem3 = 5;
-            this.gameState.birdDeck = this.gameState.birdDeck.filter(b => {
-                if (b.prestige_points === 1 && rem1 > 0) { rem1--; return false; }
-                if (b.prestige_points === 2 && rem2 > 0) { rem2--; return false; }
-                if (b.prestige_points === 3 && rem3 > 0) { rem3--; return false; }
-                return true;
-            });
-            this.addToLog('ℹ️ 20 Vögel (10x1P, 5x2P, 5x3P) wurden für den Solomodus aus dem Stapel entfernt.', 'system-msg');
-        }
+        // Deck trimming disabled
+        // if (this.rules.automaMode !== 'none') {
+        //     let rem1 = 10, rem2 = 5, rem3 = 5;
+        //     this.gameState.birdDeck = this.gameState.birdDeck.filter(b => {
+        //         if (b.prestige_points === 1 && rem1 > 0) { rem1--; return false; }
+        //         if (b.prestige_points === 2 && rem2 > 0) { rem2--; return false; }
+        //         if (b.prestige_points === 3 && rem3 > 0) { rem3--; return false; }
+        //         return true;
+        //     });
+        //     this.addToLog('ℹ️ 20 Vögel (10x1P, 5x2P, 5x3P) wurden für den Solomodus aus dem Stapel entfernt.', 'system-msg');
+        // }
 
         // Insect Deck Scaling:
         // 1 Player: IDs 1-32 (32 cards)
