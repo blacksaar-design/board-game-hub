@@ -758,7 +758,7 @@ class VogelfotografieHost {
 
         if (captureSuccess) {
             this.gameState.automa.score += targetBird.prestige_points;
-            this.gameState.automa.birds += 1;
+            this.gameState.automa.birds.push(targetBird);
         }
 
         // Even if the Automa fails to get it for points, the card is always discarded
