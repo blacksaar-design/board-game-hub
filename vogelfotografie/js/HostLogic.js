@@ -751,9 +751,11 @@ class VogelfotografieHost {
         if (captureSuccess) {
             this.gameState.automa.score += targetBird.prestige_points;
             this.gameState.automa.birds += 1;
-            this.gameState.birdDiscard.push(targetBird.id);
-            this._replaceBird(targetBird.id);
         }
+
+        // Even if the Automa fails to get it for points, the card is always discarded
+        this.gameState.birdDiscard.push(targetBird.id);
+        this._replaceBird(targetBird.id);
 
         this.updateClients();
         setTimeout(() => this.nextTurn(), 1500);
