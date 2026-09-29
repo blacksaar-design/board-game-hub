@@ -1089,13 +1089,24 @@ class VogelfotografieHost {
             currentPlayerIndex: this.gameState.currentPlayerIndex,
             currentDistance: this.gameState.currentDistance,
             currentBirdId: this.gameState.currentBirdId,
-            players: this.players.map(p => ({
-                playerId: p.playerId,
-                playerName: p.playerName,
-                playerOrder: p.playerOrder,
-                score: p.score,
-                insectCount: p.hand.insects.length
-            }))
+            players: this.players.map(p => {
+                const collectedInsects = { 'ant': 0, 'caterpillar': 0, 'grasshopper': 0, 'fly': 0 };
+                if (p.hand && p.hand.birds) {
+                    p.hand.birds.forEach(b => {
+                        if (collectedInsects[b.insect_type] !== undefined) {
+                            collectedInsects[b.insect_type]++;
+                        }
+                    });
+                }
+                return {
+                    playerId: p.playerId,
+                    playerName: p.playerName,
+                    playerOrder: p.playerOrder,
+                    score: p.score,
+                    insectCount: p.hand.insects.length,
+                    collectedInsects: collectedInsects
+                };
+            })
         };
     }
 

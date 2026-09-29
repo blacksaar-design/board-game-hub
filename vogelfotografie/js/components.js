@@ -86,6 +86,19 @@ function createPlayerCard(player, isActive = false) {
     const colors = ['#4A9EFF', '#50C878', '#FF6B9D', '#FFB84D'];
     const color = colors[player.playerOrder % colors.length];
 
+    let collectedHtml = '';
+    if (player.collectedInsects) {
+        const c = player.collectedInsects;
+        collectedHtml = `
+            <div style="font-size: 0.8rem; display: flex; gap: 8px; margin-top: 8px; justify-content: center; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 8px;">
+                <span title="Ameise">🐜 ${c.ant}</span>
+                <span title="Raupe">🐛 ${c.caterpillar}</span>
+                <span title="Heuschrecke">🦗 ${c.grasshopper}</span>
+                <span title="Fliege">🪰 ${c.fly}</span>
+            </div>
+        `;
+    }
+
     card.innerHTML = `
         <div class="player-card-header">
             <div class="player-card-avatar" style="background: ${color}">
@@ -94,9 +107,10 @@ function createPlayerCard(player, isActive = false) {
             <div class="player-card-name">${player.playerName}</div>
             <div class="player-card-stats">
                 <div class="player-card-score">🏆 ${player.score}</div>
-                <div class="player-card-insects">🦗 ${player.insectCount || 0}</div>
+                <div class="player-card-insects" style="margin-left: 8px;">🃏 Insekten-Hand: ${player.insectCount || 0}</div>
             </div>
         </div>
+        ${collectedHtml}
     `;
 
     return card;

@@ -25,13 +25,13 @@ const CHALLENGE_GOALS = [
         }
     },
     {
-        id: 'martin_minus',
-        icon: '🐦➖3',
-        title: 'Drei weniger als Martin',
-        description: 'Gewinne mit mindestens 3 Vögeln weniger als der Automa (Martin).',
+        id: 'min_13_birds',
+        icon: '🦅13',
+        title: 'Mindestens 13 Vögel',
+        description: 'Gewinne das Spiel mit mindestens 13 fotografierten Vögeln.',
         check: (playerEntry, automaEntry) => {
-            const diff = (automaEntry.birds ? automaEntry.birds.length : 0) - (playerEntry.birds ? playerEntry.birds.length : 0);
-            return diff >= 3 && playerEntry.score > automaEntry.score;
+            const count = playerEntry.birds ? playerEntry.birds.length : 0;
+            return count >= 13 && playerEntry.score > automaEntry.score;
         }
     },
     {
