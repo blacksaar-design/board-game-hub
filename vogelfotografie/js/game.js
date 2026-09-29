@@ -145,6 +145,12 @@ elements.startGameBtn.addEventListener('click', () => {
 
 const startChallengeBtn = document.getElementById('startChallengeBtn');
 if (startChallengeBtn) {
+    if (window.Challenge && window.Challenge.Manager.active) {
+        startChallengeBtn.innerHTML = `🏆 Herausforderung fortsetzen (Runde ${window.Challenge.Manager.completedGoalIds.length + 1}/4) 🏆`;
+        startChallengeBtn.style.background = 'linear-gradient(135deg, #10B981, #059669)';
+        startChallengeBtn.style.color = '#fff';
+    }
+
     startChallengeBtn.addEventListener('click', () => {
         const automaModeCombo = document.getElementById('automaMode');
         const automaMode = automaModeCombo ? automaModeCombo.value : 'master';
@@ -154,7 +160,9 @@ if (startChallengeBtn) {
             return;
         }
 
-        window.Challenge.Manager.start();
+        if (!window.Challenge.Manager.active) {
+            window.Challenge.Manager.start();
+        }
         socket.emit('startGame', { spectatorMode: false, automaMode: automaMode, isChallenge: true }, (response) => {
             if (!response.success) {
                 UI.showModal('❌', 'Fehler', response.error);
@@ -429,33 +437,34 @@ function handleChallengeEval(finalScores) {
     const { metGoals, beatAutoma } = mgr.evaluateGame(finalScores);
 
     if (!beatAutoma) {
-        showChallengeFail('Niederlage!', 'Du konntest den Automa in diesem Spiel nicht schlagen. Die Herausforderung ist gescheitert.');
+        showChallengeOverlay('Niederlage!', 'Du konntest den Automa in diesem Spiel nicht schlagen. Die Herausforderung ist gescheitert.');
         mgr.abort();
     } else if (metGoals.length === 0) {
-        showChallengeFail('Kein Ziel erreicht!', 'Du hast zwar gewonnen, aber keines der verbleibenden Ziele erfüllt. Die Herausforderung ist gescheitert.');
+        showChallengeOverlay('Kein Ziel erreicht!', 'Du hast zwar gewonnen, aber keines der verbleibenden Ziele erfüllt. Die Herausforderung ist gescheitert.');
         mgr.abort();
     } else if (metGoals.length === 1) {
         // Automatically check off that goal
         mgr.completeGoal(metGoals[0].id);
         if (mgr.isComplete()) {
-            showChallengeFail('🏆 LEGENDÄR 🏆', 'DU HAST 4 SPIELE IN FOLGE GEWONNEN UND ALLE ZIELE ERFÜLLT! Du bist der König der Vogelfotografie!');
+            showChallengeOverlay('🏆 LEGENDÄR 🏆', 'DU HAST 4 SPIELE IN FOLGE GEWONNEN UND ALLE ZIELE ERFÜLLT! Du bist der König der Vogelfotografie!');
+            mgr.abort(); // Reset after winning the whole thing
         } else {
-            // Just return to standard screen, banner will have updated
-            UI.showScreen('endScreen');
+            showChallengeOverlay('🎯 Ziel erreicht!', `Du hast das Ziel "${metGoals[0].title}" erfolgreich gemeistert! Deine Herausforderung geht in die nächste Runde.`);
         }
     } else {
         // Need to choose a goal
         showGoalSelection(metGoals, () => {
             if (mgr.isComplete()) {
-                showChallengeFail('🏆 LEGENDÄR 🏆', 'DU HAST 4 SPIELE IN FOLGE GEWONNEN UND ALLE ZIELE ERFÜLLT! Du bist der König der Vogelfotografie!');
+                showChallengeOverlay('🏆 LEGENDÄR 🏆', 'DU HAST 4 SPIELE IN FOLGE GEWONNEN UND ALLE ZIELE ERFÜLLT! Du bist der König der Vogelfotografie!');
+                mgr.abort(); // Reset after winning the whole thing
             } else {
-                UI.showScreen('endScreen');
+                showChallengeOverlay('✅ Auswahl bestätigt!', 'Dein Fortschritt wurde gespeichert. Die Herausforderung geht weiter.');
             }
         });
     }
 }
 
-function showChallengeFail(title, text) {
+function showChallengeOverlay(title, text) {
     document.getElementById('challengeOverlayTitle').textContent = title;
     document.getElementById('challengeOverlayText').textContent = text;
     document.getElementById('challengeOverlaySlots').innerHTML = ''; // maybe show past progress?
