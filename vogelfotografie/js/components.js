@@ -78,7 +78,7 @@ function createPlayerItem(player, index) {
 }
 
 // Create player card for game
-function createPlayerCard(player, isActive = false) {
+function createPlayerCard(player, isActive = false, isMe = false) {
     const card = document.createElement('div');
     card.className = `player-card ${isActive ? 'active' : ''}`;
     card.dataset.playerId = player.playerId;
@@ -87,14 +87,14 @@ function createPlayerCard(player, isActive = false) {
     const color = colors[player.playerOrder % colors.length];
 
     let collectedHtml = '';
-    if (player.collectedInsects) {
+    if (isMe && player.collectedInsects) {
         const c = player.collectedInsects;
         collectedHtml = `
             <div style="font-size: 0.8rem; display: flex; gap: 8px; margin-top: 8px; justify-content: center; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 8px;">
                 <span title="Ameise">🐜 ${c.ant}</span>
                 <span title="Raupe">🐛 ${c.caterpillar}</span>
                 <span title="Heuschrecke">🦗 ${c.grasshopper}</span>
-                <span title="Fliege">🪰 ${c.fly}</span>
+                <span title="Fliege">🦟 ${c.fly}</span>
             </div>
         `;
     }
@@ -107,7 +107,7 @@ function createPlayerCard(player, isActive = false) {
             <div class="player-card-name">${player.playerName}</div>
             <div class="player-card-stats">
                 <div class="player-card-score">🏆 ${player.score}</div>
-                <div class="player-card-insects" style="margin-left: 8px;">🃏 Insekten-Hand: ${player.insectCount || 0}</div>
+                <div class="player-card-insects">🦗 ${player.insectCount || 0}</div>
             </div>
         </div>
         ${collectedHtml}

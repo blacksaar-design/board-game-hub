@@ -524,7 +524,8 @@ function updateGameState(state) {
     // Update player cards
     elements.playersInfo.innerHTML = '';
     state.players.forEach((player, index) => {
-        elements.playersInfo.appendChild(UI.createPlayerCard(player, index === state.currentPlayerIndex));
+        const isMe = (player.playerId === gameState.playerId);
+        elements.playersInfo.appendChild(UI.createPlayerCard(player, index === state.currentPlayerIndex, isMe));
     });
 
     // Update birds
