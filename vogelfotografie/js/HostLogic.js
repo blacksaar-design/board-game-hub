@@ -106,7 +106,7 @@ class VogelfotografieHost {
 
         this.rules.automaMode = data ? (data.automaMode || 'none') : 'none';
         if (this.rules.automaMode !== 'none') {
-            const modeName = this.rules.automaMode === 'master' ? 'Meister' : (this.rules.automaMode === 'teacher' ? 'Lehrer' : this.rules.automaMode);
+            const modeName = this.rules.automaMode === 'master' ? 'Meister' : (this.rules.automaMode === 'teacher' ? 'Lehrer' : (this.rules.automaMode === 'easy' ? 'Leicht' : this.rules.automaMode));
             this.gameState.automa = { score: 0, birds: [] };
             this.addToLog(`🤖 Automa-Modus (${modeName}) aktiviert.`, 'system-msg');
         }
@@ -734,8 +734,18 @@ class VogelfotografieHost {
         const targetBird = this.gameState.visibleBirds[targetIndex];
         let captureSuccess = false;
 
-        // 2. Check difficulty probability
-        if (this.rules.automaMode === 'master') {
+        if (this.rules.automaMode === 'easy') {
+            // Debug mode: 3 rolls needed, ~29% capture chance
+            const r1 = Math.floor(Math.random() * 6);
+            const r2 = Math.floor(Math.random() * 6);
+            const r3 = Math.floor(Math.random() * 6);
+            if (r1 < 4 && r2 < 4 && r3 < 4) {
+                captureSuccess = true;
+                this.addToLog(`🟡 Automa (Leicht) würfelt 3x Blank und stiehlt den ${targetBird.name}!`, 'fail');
+            } else {
+                this.addToLog(`🟢 Automa (Leicht) würfelt Vogel-Symbol... Der ${targetBird.name} bleibt da.`, 'success');
+            }
+        } else if (this.rules.automaMode === 'master') {
             // Was 'teacher' logic
             const roll = Math.floor(Math.random() * 6);
             if (roll < 4) { // Blank: no bird symbol

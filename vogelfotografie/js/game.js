@@ -132,7 +132,12 @@ elements.startGameBtn.addEventListener('click', () => {
     const npcOnlyCb = document.getElementById('npcOnlyMode');
     const spectatorMode = npcOnlyCb ? npcOnlyCb.checked : false;
     const automaModeCombo = document.getElementById('automaMode');
-    const automaMode = automaModeCombo ? automaModeCombo.value : 'none';
+    let automaMode = automaModeCombo ? automaModeCombo.value : 'none';
+
+    const easyAutomaCb = document.getElementById('easyAutomaMode');
+    if (easyAutomaCb && easyAutomaCb.checked && automaMode !== 'none') {
+        automaMode = 'easy';
+    }
 
     socket.emit('startGame', { spectatorMode, automaMode }, (response) => {
         if (!response.success) {
